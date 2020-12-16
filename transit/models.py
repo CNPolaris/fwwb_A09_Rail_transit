@@ -5,7 +5,7 @@ from django.db import models
 # 节日的model
 class Workdays2020(models.Model):
     # 日期
-    date = models.DateTimeField(max_length=255)
+    date = models.DateTimeField()
     # 节日
     festival = models.CharField(max_length=255, blank=True)
 
@@ -13,7 +13,7 @@ class Workdays2020(models.Model):
 # 站点的model
 class Station(models.Model):
     # 站点编号
-    Station_id = models.IntegerField(max_length=255)
+    Station_id = models.IntegerField()
     # 站点名称
     Station_name = models.CharField(max_length=255)
     # 路线
@@ -29,7 +29,7 @@ class Trips(models.Model):
     # 进站名
     In_name = models.CharField(max_length=100)
     # 进站时间
-    In_time = models.DateTimeField(max_length=255)
+    In_time = models.DateTimeField()
     # 出站名
     Out_name = models.CharField(max_length=100)
     # 出站时间

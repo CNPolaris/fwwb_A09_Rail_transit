@@ -1,0 +1,29 @@
+<!--载入静态资源-->
+{% load static %}
+<!DOCTYPE html>
+<!--网站主语言-->
+<html lang="zh-cn">
+<head>
+    <!-- 网站采用的字符编码 -->
+    <meta charset="utf-8" name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1, maximum-scale=1, user-scalable=no"/>
+    <!-- 预留网站标题的位置 -->
+    <title>{% block title %}{% endblock %}</title>
+    <!-- 引入bootstrap的css文件 -->
+    <script src="{% static 'echarts/echarts.min.js' %}"></script>
+    <link rel="stylesheet" href="{% static 'prism/prism.css' %}">
+    <link rel="stylesheet" href="{% static 'bootstrap/css/bootstrap.min.css' %}">
+</head>
+<body>
+    <!-- 预留具体页面的位置 -->
+    {% block content %}{% endblock content%}
+    <!-- bootstrap.js 依赖 jquery.js 和 popper.js,在此引入 -->
+    <script src="{% static 'jquery/jquery-3.5.1.js' %}"></script>
+    <script src="{% static 'popper/popper-2.4.4.js' %}"></script>
+    <!-- 引入bootstrap的js文件 -->
+    <script src="{% static 'bootstrap/js/bootstrap.min.js' %}"></script>
+    <!-- 引入layer.js-->
+    <script src="{% static 'layer/layer.js' %}"></script>
+
+</body>
+
+</html>
