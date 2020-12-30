@@ -5,7 +5,33 @@
 {% endblock title %}
 
 {% block content %}
-    <div id="main" style="width: 600px;height:400px;">
+    <div class="container">
+        <div class="row clearfix">
+            <!--左侧导航栏-->
+            <div class="'col-md-3">
+                <div class="col">
+                    <div class="col nav">
+                        <ul>
+                            <li>
+                                <a>
+                                    轨道交通实时客流监测
+                                </a>
+                            </li>
+                            <li>
+                                <a>
+                                    未来客流情况预测
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <!--图表展示主页面-->
+            <div class="col-md-9">
+               <div id="main" style="width: 600px;height:400px;">
+            </div>
+        </div>
+    </div>
     </div>
     <script type="text/javascript">
     var x ={{ x|safe }}

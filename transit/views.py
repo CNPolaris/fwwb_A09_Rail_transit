@@ -21,8 +21,9 @@ from django.db.models import Q
 
 def index(request):
     # 初始化查询集
-    trips_data_list = Trips.objects.filter(In_time__year=2014)
-    date_list = trips_data_list.dates('In_time', kind='month')
+    Trips_list = Trips.objects.all()
+    trips_data_list = Trips_list.filter(In_time__year=2014)
+    date_list = Trips_list.dates('In_time', kind='month')
     x = []
     y = []
     for date in date_list:
@@ -33,7 +34,7 @@ def index(request):
     context = {
         'trips': trips_data_list,
         'x': x,
-        'y':y,
+        'y': y,
     }
     return render(request, 'index.html', context)
     # return HttpResponse(json.dumps(data), content_type='application/json')
