@@ -1,39 +1,33 @@
 # fwwb_A09_Rail_transit
 
-#### 介绍
-{**以下是 Gitee 平台说明，您可以替换此简介**
-Gitee 是 OSCHINA 推出的基于 Git 的代码托管平台（同时支持 SVN）。专为开发者提供稳定、高效、安全的云端软件开发协作平台
-无论是个人、团队、或是企业，都能够用 Gitee 实现代码托管、项目管理、协作开发。企业项目请看 [https://gitee.com/enterprises](https://gitee.com/enterprises)}
+#### 一、介绍
+**【问题说明】**     
+以地铁 ACC(地铁自动售检票系统清分中心简称)系统的用户行程数据、站点 数据为基础，完成基于地铁出行行程大数据的分析建模和算法研究，实现对地铁 的线路级别以及站点级别的客流进行分析和预测。  
+**【用户期望】**     
+提供友好的用户交互方式，通过输入或者调整模型的各种相关因子，对指定 时间、指定线路或者站点的客流进行预测和预警并且通过图形化的方式直观展 现。
 
-#### 软件架构
-软件架构说明
+#### 二、任务清单
 
-
-#### 安装教程
-
-1.  xxxx
-2.  xxxx
-3.  xxxx
-
-#### 使用说明
-
-1.  xxxx
-2.  xxxx
-3.  xxxx
-
-#### 参与贡献
-
-1.  Fork 本仓库
-2.  新建 Feat_xxx 分支
-3.  提交代码
-4.  新建 Pull Request
-
-
-#### 特技
-
-1.  使用 Readme\_XXX.md 来支持不同的语言，例如 Readme\_en.md, Readme\_zh.md
-2.  Gitee 官方博客 [blog.gitee.com](https://blog.gitee.com)
-3.  你可以 [https://gitee.com/explore](https://gitee.com/explore) 这个地址来了解 Gitee 上的优秀开源项目
-4.  [GVP](https://gitee.com/gvp) 全称是 Gitee 最有价值开源项目，是综合评定出的优秀开源项目
-5.  Gitee 官方提供的使用手册 [https://gitee.com/help](https://gitee.com/help)
-6.  Gitee 封面人物是一档用来展示 Gitee 会员风采的栏目 [https://gitee.com/gitee-stars/](https://gitee.com/gitee-stars/)
+1. - [x] 确定技术路线   
+   - - [x] 后端技术路线
+   - - [x] 前端技术路线
+2. - [x] 建立数据库
+3. 基于给定的数据进行客流精确统计
+    - [ ] 单月整体的客流波动分析
+    - [ ] 工作日和周末的客流分析
+    - [ ] 单站的点出/入站客流分析
+    - [ ] 用户年龄结构分析
+    - [ ] 早晚高峰客流站点分布分析
+    - [ ] 站点OD客流量分析
+    - [ ] 线路断面（按站点）流量分析
+    - [ ] 团队其他自愿拓展的统计分析
+4. 建立准确的预测模型
+#### 三、使用到的技术
+1. 整体架构
+B/S结构
+   
+2. 后端技术
+Django
+   
+3. 前端技术
+Bootstrap、Jquery、Echarts

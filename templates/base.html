@@ -17,6 +17,8 @@
     {% include 'header.html' %}
     <!-- 预留具体页面的位置 -->
     {% block content %}{% endblock content%}
+    <!-- 页脚 -->
+    {% include 'footer.html' %}
     <!-- bootstrap.js 依赖 jquery.js 和 popper.js,在此引入 -->
     <script src="{% static 'jquery/jquery-3.5.1.js' %}"></script>
     <script src="{% static 'popper/popper-2.4.4.js' %}"></script>

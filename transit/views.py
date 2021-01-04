@@ -22,19 +22,19 @@ from django.db.models import Q
 def index(request):
     # 初始化查询集
     Trips_list = Trips.objects.all()
-    trips_data_list = Trips_list.filter(In_time__year=2014)
-    date_list = Trips_list.dates('In_time', kind='month')
-    x = []
-    y = []
-    for date in date_list:
-        temp = str(date).split('-')
-        x.append(str(date))
-        y.append(trips_data_list.filter(
-            In_time__contains=datetime.date(int(temp[0]), int(temp[1]), int(temp[2]))).count())
+    # trips_data_list = Trips_list.filter(In_time__year=2014)
+    # date_list = Trips_list.dates('In_time', kind='month')
+    # x = []
+    # y = []
+    # for date in date_list:
+    #     temp = str(date).split('-')
+    #     x.append(str(date))
+    #     y.append(trips_data_list.filter(
+    #         In_time__contains=datetime.date(int(temp[0]), int(temp[1]), int(temp[2]))).count())
     context = {
-        'trips': trips_data_list,
-        'x': x,
-        'y': y,
+        # 'trips': trips_data_list,
+        # 'x': x,
+        # 'y': y,
     }
     return render(request, 'index.html', context)
     # return HttpResponse(json.dumps(data), content_type='application/json')
