@@ -21,5 +21,5 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     # 根路由
     path('', index, name='index'),
-    path('transit/', include('transit.urls', namespace='transit')),
+    path('api/', include('transit.urls', namespace='api'))
 ]
