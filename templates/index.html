@@ -5,7 +5,59 @@
 {% endblock title %}
 
 {% block content %}
+    <!--左侧导航栏-->
+    <div id="left-chart-nav">
+        <ul>
+            <li class="active">
+                <a class="left-chart-nav-link" id="left-chart-nav-line">
+                    <div class="chart-name">
+                        <svg class="icon" aria-hidden="true">
+                            <use xlink:href="#icontubiao"></use>
+                        </svg>
+                        实时客流监控
+                    </div>
+                </a>
+            </li>
+            <li class="active">
+                <a class="left-chart-nav-link" id="left-chart-nav-line">
+                    <div class="chart-icon">
+                    </div>
+                    <div class="chart-name">
+                        <svg class="icon" aria-hidden="true">
+                            <use xlink:href="#icontubiao"></use>
+                        </svg>
+                        预期客流
+                    </div>
+                </a>
+            </li>
+            <li class="active">
+                <a class="left-chart-nav-link" id="left-chart-nav-line">
+                    <div class="chart-icon">
+                    </div>
+                    <div class="chart-name">
+                        <svg class="icon" aria-hidden="true">
+                            <use xlink:href="#icontubiao"></use>
+                        </svg>
+                        实时数据库管理
+                    </div>
+                </a>
+            </li>
+            <li class="active">
+                <a class="left-chart-nav-link" id="left-chart-nav-line">
+                    <div class="chart-icon">
+                    </div>
+                    <div class="chart-name">
+                        <svg class="icon" aria-hidden="true">
+                            <use xlink:href="#icontubiao"></use>
+                        </svg>
+                        管理
+                    </div>
+                </a>
+            </li>
 
+        </ul>
+    </div>
+    <!-- 数据图 -->
     <div id="explore-container">
         <div class="chart-list-panel">
             <div class="row" id="chart-row-line">
@@ -98,17 +150,12 @@
         });
     </script>
     <style>
-
-        #explore-container {
-            margin-left: 0;
-        }
         #explore-container {
             margin-left: 180px;
             padding: 51px 20px;
-            padding-top: 51px;
-            padding-right: 20px;
-            padding-bottom: 51px;
-            padding-left: 20px;
+        }
+        #explore-container {
+            margin-left: 0;
         }
         .chart-list-panel {
             margin: 30px 15px 30px 15px;
@@ -152,6 +199,23 @@
             width: 100%;
             height: 100%;
             padding: 8px;
+        }
+        #left-chart-nav {
+            position: relative;
+            top: 0;
+            bottom: 0px;
+            left: 0;
+            padding-top: 51px;
+            width: 230px;
+            background-color: #293c55;
+            overflow-y: hidden;
+        }
+        #left-chart-nav li {
+            height: 54px;
+            padding: 10px 0 10px 20px;
+            -webkit-transition: 0.5s;
+            -o-transition: 0.5s;
+            transition: 0.5s;
         }
         #left-chart-nav li.active a {
             color: #f3f3f3;
