@@ -3,11 +3,15 @@ from django.db import models
 
 # Create your models here.
 # 节日的model
-class Workdays2020(models.Model):
+class Workdays(models.Model):
     # 日期
     date = models.DateTimeField()
     # 节日
     festival = models.CharField(max_length=255, blank=True)
+
+    # 按照日期进行降序排列
+    class Meta:
+        ordering = ['-date']
 
 
 # 站点的model
