@@ -78,11 +78,18 @@ def countAdd(instance, **kwargs):
     :param kwargs:
     :return: null
     """
-    search = TripStatistics.objects.get(date__contains=instance.In_time.strftime("%Y-%m-%d"))
-    search.count = search.count + 1
-    # search.update(count=search.values()[0]['count'] + 1)
-    search.save()
-    print("客流量记录增加完成")
+    try:
+        search = TripStatistics.objects.get(date=instance.In_time.strftime("%Y-%m-%d"))
+        print("查询结果存在")
+        search.count = search.count + 1
+        search.save()
+        print("客流量记录增加完成")
+    except:
+        print("查询结果不存在，需要添加")
+        search = TripStatistics(instance.In_time.strftime("%Y-%m-%d"), 0)
+        search.count = search.count + 1
+        search.save()
+        print("客流量记录增加完成")
 
 
 @receiver(post_delete, sender=Trips)
