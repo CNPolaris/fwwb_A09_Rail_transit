@@ -1,4 +1,7 @@
 from django.db import models
+from django.db.models.signals import post_save, post_delete
+from django.dispatch.dispatcher import receiver
+from django.utils import timezone
 
 
 # Create your models here.
@@ -44,6 +47,17 @@ class Trips(models.Model):
     Price = models.FloatField()
 
 
+# 每日客流量实时统计
+class TripStatistics(models.Model):
+    # 日期
+    date = models.DateField(timezone.now().strftime("%Y-%m-%d"), primary_key=True)
+    # 实时出行统计
+    count = models.IntegerField()
+
+    class Meta:
+        ordering = ["-date"]
+
+
 # 用户的model
 class Users(models.Model):
     # 用户编号
@@ -54,3 +68,32 @@ class Users(models.Model):
     Birth = models.IntegerField()
     # 性别
     Gender = models.IntegerField()
+
+
+@receiver(post_save, sender=Trips)
+def countAdd(instance, **kwargs):
+    """
+    当Trips新增一条数据之后，会调用countAdd函数对TripStatistics对应的日期下的count进行自加
+    :param instance: Trips 新增数据保存后 instance是被修改的实例
+    :param kwargs:
+    :return: null
+    """
+    search = TripStatistics.objects.get(date__contains=instance.In_time.strftime("%Y-%m-%d"))
+    search.count = search.count + 1
+    # search.update(count=search.values()[0]['count'] + 1)
+    search.save()
+    print("客流量记录增加完成")
+
+
+@receiver(post_delete, sender=Trips)
+def countReduce(instance, **kwargs):
+    """
+    当Trips删除一条记录时，对应当天的客流量也会随之减少
+    :param instance: 被删除的实例
+    :param kwargs:
+    :return: null
+    """
+    search = TripStatistics.objects.get(date__contains=instance.In_time.strftime("%Y-%m-%d"))
+    search.count = search.count - 1
+    search.save()
+    print("客流量记录减少完成")
