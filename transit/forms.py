@@ -16,4 +16,4 @@ class TripsForm(forms.ModelForm):
         # 指明数据模型来源
         model = Trips
         # 定义表单包含的字段
-        fields = ('In_name', 'In_time', 'Out_name', 'Out_time', 'Channel_id', "Price")
+        fields = ('in_station', 'in_station_time', 'out_station', 'out_station_time', 'channel', "price")

@@ -8,14 +8,23 @@ from django.urls import path, re_path
 
 # 正在部署的应用的名称
 from transit import views
-from .views import echarts_data_month, echarts_data_user
+from .views import echarts_monthflow, echarts_agestruct, echarts_dailyflow
 
 app_name = 'transit'
 
 urlpatterns = [
     # path将url映射到视图
     path('index/', views.index, name='index'),
-    # path('index-data/', views.index_data, name='index-data'),
-    path('echarts/data_month.json', echarts_data_month, name='data_month'),
-    path('echarts/data_user_age.json', echarts_data_user, name='user_age')
+    # TODO：目前是所写的api没有加上id等来进行特别识别，需要前端配合form来实现
+    # 单月客流
+    path('echarts/data/monthflow.json', echarts_monthflow, name='monthflow'),
+    # 用户年龄结构
+    path('echarts/data/agestruct.json', echarts_agestruct, name='agestruct'),
+    # 每日客流量
+    path('echarts/data/dailyflow.json', echarts_dailyflow, name='dailyflow'),
+
+    path('load_dataoftrip', views.load_dataoftrip, name='load_data'),
+    path('load_dataofworkday', views.load_dataofworkday, name='load_dataofworkday'),
+    path('load_dataofuser', views.load_dataofuser, name='load_dataofuser'),
+    path('load_dataofstation', views.load_dataofstation, name='load_dataofstation')
 ]

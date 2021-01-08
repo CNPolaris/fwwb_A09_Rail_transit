@@ -5,46 +5,46 @@ from django.utils import timezone
 
 
 # Create your models here.
-# 节日的model
-class Workdays(models.Model):
-    # 日期
-    date = models.DateTimeField()
-    # 节日
-    festival = models.CharField(max_length=255, blank=True)
-
-    # 按照日期进行降序排列
-    class Meta:
-        ordering = ['-date']
+# 用户的model
+class Users(models.Model):
+    # 用户编号
+    user_id = models.CharField(primary_key=True, max_length=255)
+    # 区域
+    dist = models.IntegerField()
+    # 出生日期
+    birth = models.IntegerField()
+    # 性别
+    gender = models.IntegerField()
 
 
 # 站点的model
 class Station(models.Model):
     # 站点编号
-    Station_id = models.IntegerField()
+    station_id = models.IntegerField(primary_key=True)
     # 站点名称
-    Station_name = models.CharField(max_length=255)
+    station_name = models.CharField(max_length=255)
     # 路线
-    Station_route = models.CharField(max_length=100)
+    station_route = models.CharField(max_length=100)
     # 行政区域
-    Admin = models.CharField(max_length=100)
+    admin_area = models.CharField(max_length=100)
 
 
 # 乘车记录的model
 class Trips(models.Model):
     # 乘客编号
-    User_id = models.CharField(max_length=255)
+    user_id = models.ForeignKey(Users, on_delete=models.CASCADE)
     # 进站名
-    In_name = models.CharField(max_length=100)
+    in_station = models.CharField(max_length=255)
     # 进站时间
-    In_time = models.DateTimeField()
+    in_station_time = models.DateTimeField()
     # 出站名
-    Out_name = models.CharField(max_length=100)
+    out_station = models.CharField(max_length=255)
     # 出站时间
-    Out_time = models.DateTimeField()
+    out_station_time = models.DateTimeField()
     # 购票渠道
-    Channel_id = models.IntegerField()
+    channel = models.IntegerField()
     # 票价
-    Price = models.FloatField()
+    price = models.FloatField()
 
 
 # 每日客流量实时统计
@@ -58,16 +58,16 @@ class TripStatistics(models.Model):
         ordering = ["-date"]
 
 
-# 用户的model
-class Users(models.Model):
-    # 用户编号
-    User_id = models.CharField(max_length=255)
-    # 区域
-    Dist = models.IntegerField()
-    # 出生日期
-    Birth = models.IntegerField()
-    # 性别
-    Gender = models.IntegerField()
+# 节日的model
+class Workdays(models.Model):
+    # 日期
+    date = models.DateField(primary_key=True)
+    # 节日
+    date_class = models.CharField(max_length=255, blank=True)
+
+    # 按照日期进行降序排列
+    class Meta:
+        ordering = ['-date']
 
 
 @receiver(post_save, sender=Trips)
@@ -79,14 +79,14 @@ def countAdd(instance, **kwargs):
     :return: null
     """
     try:
-        search = TripStatistics.objects.get(date=instance.In_time.strftime("%Y-%m-%d"))
+        search = TripStatistics.objects.get(date=instance.in_station_time.strftime("%Y-%m-%d"))
         print("查询结果存在")
         search.count = search.count + 1
         search.save()
         print("客流量记录增加完成")
     except:
         print("查询结果不存在，需要添加")
-        search = TripStatistics(instance.In_time.strftime("%Y-%m-%d"), 0)
+        search = TripStatistics(instance.in_station_time.strftime("%Y-%m-%d"), 0)
         search.count = search.count + 1
         search.save()
         print("客流量记录增加完成")
@@ -100,7 +100,7 @@ def countReduce(instance, **kwargs):
     :param kwargs:
     :return: null
     """
-    search = TripStatistics.objects.get(date__contains=instance.In_time.strftime("%Y-%m-%d"))
+    search = TripStatistics.objects.get(date__contains=instance.in_station_time.strftime("%Y-%m-%d"))
     search.count = search.count - 1
     search.save()
     print("客流量记录减少完成")
