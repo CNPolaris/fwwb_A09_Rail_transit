@@ -17,11 +17,11 @@ urlpatterns = [
     path('index/', views.index, name='index'),
     # TODO：目前是所写的api没有加上id等来进行特别识别，需要前端配合form来实现
     # 单月客流
-    path('echarts/data/monthflow.json', echarts_monthflow, name='monthflow'),
+    path('echarts/data/<str:date>/monthflow.json', echarts_monthflow, name='monthflow'),
     # 用户年龄结构
     path('echarts/data/agestruct.json', echarts_agestruct, name='agestruct'),
     # 每日客流量
-    path('echarts/data/dailyflow.json', echarts_dailyflow, name='dailyflow'),
+    path('echarts/data/<int:year>/dailyflow.json', echarts_dailyflow, name='dailyflow'),
 
     path('load_dataoftrip', views.load_dataoftrip, name='load_data'),
     path('load_dataofworkday', views.load_dataofworkday, name='load_dataofworkday'),

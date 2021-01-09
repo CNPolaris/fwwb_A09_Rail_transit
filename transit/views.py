@@ -23,17 +23,17 @@ def index(request):
 
 
 @csrf_exempt
-def echarts_monthflow(request):
+def echarts_monthflow(request, date):
     """
     后端向前端返回json数据
-    以2020.01的数据作为测试数据使用，测试完成后根据实际日期从数据库抽取数据
+    :param date: 前端使用api时需要带上date数据 如2020-01-01
     :param request:
     :return: json
     key: 某年月日内的所有入站时间
     value: 根据入站时间In_time进行分类统计后的每组对应的数量
     """
-    # TODO：需要在请求上加入日期 如20200101等
-    Trips_list_2020 = Trips.objects.filter(in_station_time__contains=datetime.date(2020, 1, 1)).values_list(
+    print(date)
+    Trips_list_2020 = Trips.objects.filter(in_station_time__contains=date).values_list(
         'in_station_time').annotate(
         Count("id"))
     # date_list = Trips_list_2020.dates('In_time', kind='day')
@@ -83,26 +83,29 @@ def echarts_agestruct(request):
 
 
 @csrf_exempt
-def echarts_dailyflow(request):
+def echarts_dailyflow(request, year):
     """
     每天实时客流量统计
+    :param year: web发送请求时所附带的当前年份参数
     :param request: Get
     :return: json
     """
-    # TODO：需要在请求上加入日期
     # 从Tripstatistics中获取每一天的实时出行人数
-    EachDay_list = TripStatistics.objects.filter(date__contains=datetime.datetime.today().year-1)
-    print(EachDay_list)
-    each_day = []
-    each_day_flow = []
-    for line in EachDay_list:
-        each_day.append(line.date)
-        each_day_flow.append(line.count)
-    context = {
-        "date": each_day,
-        "date_flow": each_day_flow
-    }
-    return JsonResponse(context)
+    EachDay_list = TripStatistics.objects.filter(date__contains=year)
+    if EachDay_list:
+        each_day = []
+        each_day_flow = []
+        for line in EachDay_list:
+            each_day.append(line.date)
+            each_day_flow.append(line.count)
+        # api响应的数据
+        context = {
+            "date": each_day,
+            "date_flow": each_day_flow
+        }
+        return JsonResponse(context)
+    else:
+        return JsonResponse({})
 
 
 @csrf_exempt
@@ -113,7 +116,6 @@ def load_dataoftrip(request):
     :return:
     """
     # FIXME(CNPolaris): 导入trip时由于数据量较大会导致django长时间连接mysql而出现数据库连接丢失的情况
-    import pandas as pd
     from itertools import islice
     django.db.close_old_connections()
     # data = pd.read_csv("E:\学习资料\第十二届服创大赛A类数据（部分企业）\新建文件夹\客流预测分析大数据附件\\trips.csv", parse_dates=['进站时间', '出站时间'])
