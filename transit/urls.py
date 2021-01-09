@@ -22,7 +22,8 @@ urlpatterns = [
     path('echarts/data/agestruct.json', echarts_agestruct, name='agestruct'),
     # 每日客流量
     path('echarts/data/<int:year>/dailyflow.json', echarts_dailyflow, name='dailyflow'),
-
+    # 单站的点出/入站客流分析
+    path('echarts/data/<str:station>/<str:date>/singlesta.json', views.echarts_singlesta, name='singlestaion'),
     path('load_dataoftrip', views.load_dataoftrip, name='load_data'),
     path('load_dataofworkday', views.load_dataofworkday, name='load_dataofworkday'),
     path('load_dataofuser', views.load_dataofuser, name='load_dataofuser'),

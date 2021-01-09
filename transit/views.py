@@ -5,7 +5,7 @@ from django.shortcuts import render
 from django.http import HttpResponse, JsonResponse
 import time
 # 导入行程model
-from .models import Trips, models, Users, Workdays, Station, TripStatistics
+from .models import Trips, Users, Workdays, Station, TripStatistics
 # 导入表单类
 from .forms import TripsForm
 # 引入redirect重定向模块
@@ -13,7 +13,7 @@ from django.shortcuts import render, redirect
 import datetime
 from django.views.decorators.csrf import csrf_exempt
 import pandas as pd
-from django.db import close_old_connections
+from django.db.models import Q
 
 
 # Create your views here.
@@ -109,6 +109,37 @@ def echarts_dailyflow(request, year):
 
 
 @csrf_exempt
+def echarts_singlesta(request, station, date):
+    """
+    该api提供查询具体到某站某天24时刻的出入客流
+    :param station:
+    :param date:
+    :param request:
+    :return:
+    """
+    # 使用Q语句通过或条件筛选出进站或出站是所查询station的集合
+    Sta_in_list = Trips.objects.filter(in_station=station,
+                                       in_station_time__contains=date).values(
+        'in_station_time')
+    Sta_out_list = Trips.objects.filter(out_station=station, out_station_time__contains=date).values(
+        'out_station_time')
+    hour_dict_in = dict(zip(list(range(0, 24)), [0] * 24))
+    hour_dict_out = dict(zip(list(range(0, 24)), [0] * 24))
+
+    in_list = pd.value_counts([int(i['in_station_time'].strftime('%H')) for i in Sta_in_list]).to_dict()
+    out_list = pd.value_counts([int(i['out_station_time'].strftime('%H')) for i in Sta_out_list]).to_dict()
+    for i, o in zip(in_list.keys(), out_list.keys()):
+        hour_dict_in[i] = in_list[i]
+        hour_dict_out[o] = out_list[o]
+    context = {
+        'hour_list': list(range(0, 23)),
+        'in_list': [i for i in hour_dict_in.values()],
+        'out_list': [i for i in hour_dict_out.values()]
+    }
+    return JsonResponse(context)
+
+
+@csrf_exempt
 def load_dataoftrip(request):
     """
     向数据库中导入trip的数据
@@ -178,7 +209,6 @@ def load_dataofworkday(request):
     print("workdays写入开始")
     start = time.clock()
     for index, row in data.iterrows():
-        close_old_connections()
         Workdays_list.append(Workdays(date=row.date, date_class=row['class']))
     Workdays.objects.bulk_create(Workdays_list)
     end = time.clock()
