@@ -70,6 +70,14 @@ class Workdays(models.Model):
         ordering = ['-date']
 
 
+# list model
+class Menu(models.Model):
+    model_name = models.CharField(max_length=50, verbose_name="模块名称")
+    model_verbose = models.CharField(max_length=50)
+    icon = models.CharField(max_length=20)
+    icon_color = models.CharField(max_length=50)
+
+
 @receiver(post_save, sender=Trips)
 def countAdd(instance, **kwargs):
     """
