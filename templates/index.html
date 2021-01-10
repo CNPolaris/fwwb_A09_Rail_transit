@@ -4,3 +4,155 @@
     轨道交通智慧客流分析预测平台
 {% endblock title %}
 
+{% block breadcrumb %}
+<li><a href="{% url 'transit:index' %}"><i class="fa fa-dashboard"></i>
+  {% if meta %}{{meta.logo}}{% else %}仪表盘{% endif %}
+</a></li>
+<li class="active">仪表盘</li>
+{% endblock breadcrumb %}
+
+
+{% block main-content %}
+<div class="box">
+    <div class="box-header with-border">
+        <h3 class="box-title">{{ date }}整体客流波动分析</h3>
+        <div class="box-tools pull-right">
+          <button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i>
+          </button>
+          <button type="button" class="btn btn-box-tool" data-widget="remove"><i class="fa fa-times"></i></button>
+        </div>
+    </div>
+
+    <div class="box-body">
+        <div class="row">
+
+            <div class="col-md-7 col-xs-12">
+                <div id="monthly_flow"style="min-width:320px;height: 400px"></div>
+            </div>
+
+            <div class="clearfix visible-sm-block"></div>
+
+            <div class="col-md-5 col-xs-12">
+                <div id="age_struct"style="min-height: 320px;height: 400px"></div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock main-content %}
+
+{% block extra-js %}
+    <script type="text/javascript">
+        var myChart =echarts.init(document.getElementById('monthly_flow'));
+        $.ajax({
+            url:"/api/echarts",
+            type:"get",
+            dataType:"json",
+            success:function (data){
+                   myChart.setOption(option = {
+                tooltip: {},
+                xAxis: {
+                    data: data.key
+                },
+                yAxis: {},
+                toolbox: {},
+                dataZoom: [],
+                visualMap: {
+                    top: 10,
+                    right: 10,
+                    pieces: [{
+                        gt: 0,
+                        lte: 50,
+                        color: '#096'
+                    }, {
+                        gt: 50,
+                        lte: 100,
+                        color: '#ffde33'
+                    }, {
+                        gt: 100,
+                        lte: 150,
+                        color: '#ff9933'
+                    }, {
+                        gt: 150,
+                        lte: 200,
+                        color: '#cc0033'
+                    }, {
+                        gt: 200,
+                        lte: 300,
+                        color: '#660099'
+                    }, {
+                        gt: 300,
+                        color: '#7e0023'
+                    }],
+                    outOfRange: {
+                        color: '#999'
+                    }
+                },
+                series: {
+                    name: '客流量',
+                    type: 'line',
+                    data: data.value,
+                    markLine: {
+                        silent: true,
+                        data: [{
+                            yAxis: 50
+                        }, {
+                            yAxis: 100
+                        }, {
+                            yAxis: 150
+                        }, {
+                            yAxis: 200
+                        }, {
+                            yAxis: 300
+                        }]
+                    }
+                }
+            });
+            }
+        });
+    </script>
+   <script type="text/javascript">
+        var echart_age_struct = echarts.init(document.getElementById('age_struct'));
+        $.ajax({
+           url:"echarts/data/agestruct.json",
+            type:"get",
+            dataType: "json",
+            success:function (data) {
+                echart_age_struct.setOption(
+                    option = {
+                        title: {
+                            text: '乘客年龄结构',
+                            left: 'center'
+                        },
+                        tooltip: {
+                            trigger: 'item',
+                            formatter: '{a} <br/>{b} : {c} ({d}%)'
+                        },
+                        legend: {
+                            orient: 'vertical',
+                            left: 'left',
+                            data: data.name
+                        },
+                        series: [
+                            {
+                                name: '年龄区间',
+                                type: 'pie',
+                                radius: '55%',
+                                center: ['50%', '60%'],
+                                data: data.data,
+                                emphasis: {
+                                    itemStyle: {
+                                        shadowBlur: 10,
+                                        shadowOffsetX: 0,
+                                        shadowColor: 'rgba(0, 0, 0, 0.5)'
+                                    }
+                                }
+                            }
+                        ]
+                    }
+
+                );
+            }
+        });
+   </script>
+{% endblock extra-js %}

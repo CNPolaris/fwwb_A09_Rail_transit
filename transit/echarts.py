@@ -45,30 +45,32 @@ def echarts_agestruct(request):
     count: 不同年龄段的用户数量
     """
     User_list = Users.objects.values_list('birth').annotate(Count("user_id"))
-    # 年龄阶段分组
-    age_stage = [list(range(0, 7)), list(range(7, 18)), list(range(18, 41)), list(range(41, 66))]
     # 记录不同年龄段的个数
     count = [0, 0, 0, 0, 0]
+    stage = ["0-6", "7-17", "18-40", "41-65", "66+"]
     # 获取互联网时间的年份
     This_year = datetime.date.today().year
     if User_list:
         for line in User_list:
             # 当前的日期减去用户的出生年
             age = This_year - line[0]
-            if age in age_stage[0]:
+            if 0 <= age < 7:
                 count[0] = count[0] + line[1]
-            elif age in age_stage[1]:
+            elif 7 <= age < 18:
                 count[1] = count[1] + line[1]
-            elif age in age_stage[2]:
+            elif 18 <= age < 41:
                 count[2] = count[2] + line[1]
-            elif age in age_stage[3]:
+            elif 41 <= age < 66:
                 count[3] = count[3] + line[1]
-            else:
+            elif 66 <= age:
                 count[4] = count[4] + line[1]
+    data = []
+    for s, c in zip(stage, count):
+        data.append({'name': s, 'value': c})
     # 向前端返回的数据
     context = {
-        "age": ["0-6", "7-17", "18-40", "41-65", "66+"],
-        "count": count
+        "data": data,
+        "name": stage
     }
     return JsonResponse(context)
 
