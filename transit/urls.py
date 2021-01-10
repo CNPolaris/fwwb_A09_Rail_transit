@@ -4,7 +4,7 @@
 # @Author  : CNPolaris
 
 # 引入path
-from django.urls import path, re_path
+from django.conf.urls import url, include, static
 
 # 正在部署的应用的名称
 from transit import views
@@ -14,20 +14,20 @@ app_name = 'transit'
 
 urlpatterns = [
     # 首页路由
-    path('index/', views.index, name='index'),
+    url(r'^$', views.IndexView.as_view(), name='index'),
     # 向echarts提供数据的api
     # 单月客流
-    path('echarts/data/<str:date>/monthflow.json', echarts_monthflow, name='monthflow'),
+    url('echarts/data/<str:date>/monthflow.json', echarts_monthflow, name='monthflow'),
     # 用户年龄结构
-    path('echarts/data/agestruct.json', echarts_agestruct, name='agestruct'),
+    url('echarts/data/agestruct.json', echarts_agestruct, name='agestruct'),
     # 每日客流量
-    path('echarts/data/<int:year>/dailyflow.json', echarts_dailyflow, name='dailyflow'),
+    url('echarts/data/<int:year>/dailyflow.json', echarts_dailyflow, name='dailyflow'),
     # 单站的点出/入站客流分析
-    path('echarts/data/<str:station>/<str:date>/singlesta.json', echarts_singlesta, name='singlestaion'),
+    url('echarts/data/<str:station>/<str:date>/singlesta.json', echarts_singlesta, name='singlestaion'),
 
     # import数据模块
-    path('load_dataoftrip', load_dataoftrip, name='load_data'),
-    path('load_dataofworkday', load_dataofworkday, name='load_dataofworkday'),
-    path('load_dataofuser', load_dataofuser, name='load_dataofuser'),
-    path('load_dataofstation', load_dataofstation, name='load_dataofstation')
+    url('load_dataoftrip', load_dataoftrip, name='load_data'),
+    url('load_dataofworkday', load_dataofworkday, name='load_dataofworkday'),
+    url('load_dataofuser', load_dataofuser, name='load_dataofuser'),
+    url('load_dataofstation', load_dataofstation, name='load_dataofstation')
 ]
