@@ -1,8 +1,21 @@
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-    <div class="container">
-        <h1 style="text-align: center;color: #ffffff">
-            轨道交通客流预测平台
-        </h1>
-    </div>
-
-</nav>
+<header class="main-header no-print">
+    {% block main-header %}
+    <a href="{% url 'transit:index' %}" class="logo">
+      <span class="logo-mini"><b>T</b>RAN</span>
+      <span class="logo-lg"><b>轨道交通客流监测平台</b></span>
+    </a>
+    <nav class="navbar navbar-static-top" role="navigation">
+      <a href="#" class="sidebar-toggle" data-toggle="push-menu" role="button">
+        <span class="sr-only">Toggle navigation</span>
+      </a>
+      <div class="navbar-custom-menu">
+        <ul class="nav navbar-nav">
+{#          {%block notifications%}{%include 'user/notify.html'%}{%endblock notifications%}#}
+{#          <li class="dropdown user user-menu">#}
+{#            {% block user-menu %}{% include 'user/panel.html'%}{% endblock %}#}
+{#          </li>#}
+        </ul>
+      </div>
+    </nav>
+    {% endblock main-header %}
+</header>
