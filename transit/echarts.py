@@ -15,7 +15,7 @@ import pandas as pd
 
 
 @csrf_exempt
-def echarts_monthflow(request, date):
+def echarts_monthflow(request):
     """
     后端向前端返回json数据
     :param date: 前端使用api时需要带上date数据 如2020-01-01
@@ -24,13 +24,17 @@ def echarts_monthflow(request, date):
     key: 某年月日内的所有入站时间
     value: 根据入站时间In_time进行分类统计后的每组对应的数量
     """
-    Trips_list_2020 = Trips.objects.filter(in_station_time__contains=date).values_list(
-        'in_station_time').annotate(
-        Count("id"))
+    Trips_list_2020 = Trips.objects.filter(in_station_time__contains='2020-01-01').values(
+        'in_station_time')
+    date = []
+    for i in Trips_list_2020:
+        print(i['in_station_time'].strftime("%H:%M:%S"))
+        date.append(i['in_station_time'].strftime("%H:%M:%S"))
+    print(pd.value_counts(date))
     # date_list = Trips_list_2020.dates('In_time', kind='day')
     context = {
-        "key": [i[0] for i in Trips_list_2020],
-        "value": [i[1] for i in Trips_list_2020]
+        # "key": [i[0] for i in Trips_list_2020],
+        # "value": [i[1] for i in Trips_list_2020]
     }
     return JsonResponse(context)
 
@@ -84,7 +88,7 @@ def echarts_dailyflow(request, year):
     :return: json
     """
     # 从Tripstatistics中获取每一天的实时出行人数
-    EachDay_list = TripStatistics.objects.filter(date__contains=year)
+    EachDay_list = TripStatistics.objects.filter(date__contains=year).order_by('date')
     if EachDay_list:
         each_day = []
         each_day_flow = []
@@ -128,5 +132,53 @@ def echarts_singlesta(request, station, date):
         'hour_list': list(range(0, 23)),
         'in_list': [i for i in hour_dict_in.values()],
         'out_list': [i for i in hour_dict_out.values()]
+    }
+    return JsonResponse(context)
+
+
+@csrf_exempt
+def echarts_eachSta(request, date):
+    """
+    实时返回当前日期的所有站点的出入站客流压力
+    :param date: 路由中的日期
+    :param request: get
+    :return: json
+    """
+    # FIXME:关于路由访问和查询效率需要改善
+    # 在Station中查询所有的station_name
+    Station_set = Station.objects.values('station_name')
+    # 在Trips中查询所有的in_station_time和out_station_time
+    In_out_station = Trips.objects.filter(in_station_time__contains='2020-01-01').values('in_station', 'out_station')
+    # 存储当前系统中的所有站点
+    station_list = []
+    if Station_set:
+        station_list = [sta['station_name'] for sta in Station_set]
+    # 存储进出站的时间
+    in_station_list = []
+    out_station_list = []
+    # 填充
+    if In_out_station:
+        for d in In_out_station:
+            in_station_list.append(d['in_station'])
+            out_station_list.append(d['out_station'])
+    # 保证station_name全面
+    station_list = list(set(in_station_list + out_station_list + station_list))
+    # 对所有的进出站点进行分类统计了
+    in_station_list = pd.value_counts(in_station_list).to_dict()
+    out_station_list = pd.value_counts(out_station_list).to_dict()
+    # 构成两个进出站字典
+    in_station_dict = dict(zip(station_list, [0] * len(station_list)))
+    out_station_dict = dict(zip(station_list, [0] * len(station_list)))
+    # 根据字典进行数据填充
+    for inSta in in_station_list.keys():
+        in_station_dict[inSta] = in_station_dict[inSta] + in_station_list[inSta]
+    for outSta in out_station_list.keys():
+        out_station_dict[outSta] = out_station_dict[outSta] + out_station_list[outSta]
+    inNum = [i for i in in_station_dict.values()]
+    outNum = [i for i in out_station_dict.values()]
+    context = {
+        'label': station_list,
+        'inNum': inNum,
+        'outNum': outNum
     }
     return JsonResponse(context)
