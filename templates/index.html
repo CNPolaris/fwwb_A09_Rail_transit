@@ -27,7 +27,7 @@
         <div class="row">
 
             <div class="col-md-7 col-xs-12">
-                <div id="monthly_flow"style="min-width:320px;height: 400px"></div>
+                <div id="eachSta"style="min-width:320px;height: 400px"></div>
             </div>
 
             <div class="clearfix visible-sm-block"></div>
@@ -43,7 +43,7 @@
 
 {% block extra-js %}
     <script type="text/javascript">
-        var myChart =echarts.init(document.getElementById('monthly_flow'));
+        var myChart =echarts.init(document.getElementById('eachSta'));
         var date = new Date();
         var year = date.getFullYear();
         var month = date.getMonth()+1;
