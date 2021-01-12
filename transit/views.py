@@ -5,6 +5,9 @@ from django.shortcuts import render
 from django.http import HttpResponse, JsonResponse
 import time
 # 导入行程model
+from django.urls import reverse_lazy
+from django.utils.functional import cached_property
+from django.core.cache import cache, utils
 from .models import Trips, Users, Workdays, Station, TripStatistics, Menu
 # 导入表单类
 from .forms import TripsForm
@@ -14,28 +17,56 @@ import datetime
 from django.views.decorators.csrf import csrf_exempt
 import pandas as pd
 from django.db.models import Q
-from django.views.generic import TemplateView
+from django.views.generic import TemplateView, ListView
+from transit.mixins import BaseRequiredMixin, get_user_config
+from django.contrib.auth.views import (
+    LoginView, LogoutView, PasswordResetView,
+    PasswordResetDoneView, PasswordResetConfirmView,
+    PasswordResetCompleteView, PasswordChangeDoneView,
+    PasswordChangeView
+)
+
+login = LoginView.as_view(template_name='accounts/login.html')
+
+logout = LogoutView.as_view(template_name='accounts/logout.html')
+
+password_reset = PasswordResetView.as_view(
+    template_name='accounts/password_reset_form.html',
+    email_template_name='accounts/password_reset_email.html',
+    subject_template_name='accounts/password_reset_subject.txt',
+)
+
+password_reset_done = PasswordResetDoneView.as_view(
+    template_name='accounts/password_reset_done.html'
+)
+
+reset = PasswordResetConfirmView.as_view(
+    template_name='accounts/password_reset_confirm.html'
+)
+
+reset_done = PasswordResetCompleteView.as_view(
+    template_name='accounts/password_reset_complete.html'
+)
+
+
+class PasswordChangeView(BaseRequiredMixin, PasswordChangeView):
+    template_name = 'accounts/password_change_form.html'
+    success_url = reverse_lazy('transit:index')
+
+
+password_change = PasswordChangeView.as_view()
+
+password_change_done = PasswordChangeDoneView.as_view(
+    template_name='accounts/password_change_done.html'
+)
 
 
 # Create your views here.
 # 首页视图
-class IndexView(TemplateView):
+class IndexView(BaseRequiredMixin, TemplateView):
     template_name = 'index.html'
-
-    def make_menu(self):
-        Menu_list = Menu.objects.all()
-        menus = [
-            {
-                'model_name': menu.model_name,
-                'verbose': menu.model_verbose,
-                'icon': menu.icon,
-                'icon_color': menu.icon_color
-            } for menu in Menu_list
-        ]
-        return menus
 
     def get_context_data(self, **kwargs):
         context = super(IndexView, self).get_context_data(**kwargs)
-        context['menus'] = self.make_menu()
         context['date'] = datetime.date.today().strftime("%Y-%m-%d")
         return context
