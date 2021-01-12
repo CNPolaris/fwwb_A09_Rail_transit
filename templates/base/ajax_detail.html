@@ -1,0 +1,61 @@
+{% block main-content %}
+  <div class="modal-header">
+      <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+      <h4 class="modal-title">
+        <span class="text-{%if object.actived%}green{%else%}red{%endif%}">
+          {{object.title_description}}
+        </span>
+      </h4>
+  </div>
+    <form action="{%url 'idcops:list' meta.model_name%}" method="POST">{% csrf_token %}
+    <input name="index" value="{{object.pk}}" hidden>
+    <div class="modal-body table-responsive">
+      <table class="table table-bordered table-condensed nowarp">
+        <tbody>{{object_as_table}}</tbody>
+      </table>
+      {%if object.remarks%}
+      <table class="table table-bordered table-condensed nowarp">
+        <thead>
+          <tr class="active">
+            <th width="4%">#</th>
+            <th width="25%">备注信息</th>
+            <th>备注内容</th>
+            <th width="5%">操作</th>
+          </tr>
+        </thead>
+        <tbody>
+        {%for remark in object.remarks%}
+          <tr class="{% cycle '' 'active' %}">
+            <td>{{forloop.revcounter}}.</td>
+            <td>{{remark.created}}<small> {{remark.creator}}</small></td>
+            <td>{{remark.content|safe}}</td>
+            <td>
+              <a data-toggle="modal" data-target="#modal-lg-static" class="label text-red" href="{%url 'idcops:detail' 'comment' remark.id%}">
+                <i class="fa fa-trash"></i><span class="hidden-xs"> 删除</span>
+              </a>
+            </td>
+          </tr>
+        {%endfor%}
+        </tbody>
+      </table>
+      {%endif%}
+    </div>
+
+    <div id="detail-footer" class="modal-footer">
+      {%if actions%}
+      <div class="btn-group">
+        {% for a in actions%}
+        <button type="submit" name="action" value="{{ a.1 }}" class="btn btn-default btn-sm margin-r-5">
+          <i class="{{a.2}}"></i><span class="hidden-xs"> {{ a.3 }}</span>
+        </button>
+        {%endfor%}
+        {%if 'idcops.change_'|add:meta.model_name in perms and can_change%}
+        <a class="btn btn-default btn-sm" title="编辑 {{object}}" href="{%url 'idcops:update' meta.model_name object.pk%}">
+          <i class="fa fa-edit"></i><span class="hidden-xs"> 编辑</span></a>
+        {%endif%}
+      </div>
+      {%endif%}
+
+    </div>
+    </form>
+{% endblock %}

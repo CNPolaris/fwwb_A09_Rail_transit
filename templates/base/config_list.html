@@ -1,0 +1,123 @@
+{% extends 'base/base.html' %}
+{% load static app_extras i18n %}
+{% block title %}自定义{{meta.title}}列表字段{% endblock %}
+{% block extra-css %}
+{% endblock %}
+
+{% block content-header %}<h1>{{meta.verbose_name}} <small> 自定义{{meta.verbose_name}}列表字段</small></h1>{% endblock %}
+
+{% block breadcrumb %}
+<li><a href="{% url 'idcops:index' %}"><i class="fa fa-dashboard"></i>
+    {% if meta %}{{meta.logo}}{% else %}仪表盘{% endif %}
+  </a></li>
+<li><i class="{{meta.icon}}"></i> {{meta.verbose_name}}</li>
+<li class="active hidden-xs">
+  <a title="设置列表字段" href="{%url 'idcops:list' meta.model_name%}?config=true">
+    <span> 配置列表</span>
+  </a>
+</li>
+{% endblock %}
+
+
+{% block main-content %}
+<div class="box box-warning">
+  <div class="box-header with-border">
+    <h3 class="box-title"> 自定义{{meta.verbose_name}}列表字段</h3>
+    <div class="box-tools pull-right">
+      <div class="btn-group margin-r-5">
+        <button type="button" class="btn btn-default btn-sm" onclick="window.history.go(-1)">
+          <i class="fa fa-arrow-circle-o-left"></i><span> 返回上一页</span>
+        </button>
+      </div>
+    </div>
+  </div>
+  {%block form%}
+  <form action="" method="POST" id="{{meta.model_name}}-config_list">
+    {% csrf_token %}
+    <div class="box-body">
+      <p>左右拖拽可定制列表的字段，上下拖拽可定制列表的顺序。<span class="text-red">右边绿色部分的元素是当前列表或配置后的列表字段。</span></p>
+      <div class="form-group">
+        <div class="list-header">
+          <div class="row">
+            <div id="unused_list_fields" class="list-groupd col-md-6">
+              <label for="unused_fields" class="control-label">
+                未在列表中展示的字段:
+              </label>
+              {% for field in fields_metadata.unused_list_fields%}
+              <div class="list-field-item external-event bg-gray" name="{{field.name}}">
+                <input type="hidden" disabled="disabled" checked="checked" value="{{field.name}}" name="list_display">
+                {{field.verbose_name}}
+              </div>
+              {% endfor %}
+            </div>
+
+            <div id="current_list_display" class="list-groupd col-md-6">
+              <label for="used_fields" class="control-label">
+                当前列表中展示的字段和顺序:
+              </label>
+              {% for field in fields_metadata.current_list_display%}
+              <div class="list-field-item external-event bg-green" name="{{field.name}}">
+                <input type="hidden" checked="checked" value="{{field.name}}" name="list_display">
+                {{field.verbose_name}}
+              </div>
+              {% endfor %}
+            </div>
+
+          </div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="list_only_date" class="control-label">请选择日期时间字段格式:</label>
+        <div style="width: 100%;" class="btn-group" data-toggle="buttons">
+          <label class="btn btn-primary btn-sm{%if fields_metadata.only_date == "0" %} active{%endif%}">
+            <input type="radio" name="list_only_date" value="0" autocomplete="off" {%if fields_metadata.only_date == "0" %}checked{%endif%}> 显示日期和时间
+          </label>
+          <label class="btn btn-primary btn-sm{%if fields_metadata.only_date == "1" %} active{%endif%}">
+            <input type="radio" name="list_only_date" value="1" autocomplete="off" {%if fields_metadata.only_date == "1" %}checked{%endif%}> 仅显示日期
+          </label>
+        </div>
+        <p class="help-block">例如：2020-11-03 16:16:16（日期和时间）</p>
+      </div>
+
+    </div>
+    <div class="box-footer">
+      <button type="button" class="btn btn-default btn-sm margin-r-5" onclick="window.history.go(-1)">
+        <span> 取消并返回</span>
+      </button>
+      <div class="btn-group pull-right">
+        <button type="submit" name="_saverlist" class="btn btn-primary btn-sm">提交并返回列表</button>
+      </div>
+    </div>
+  </form>
+  {%endblock form%}
+</div>
+{% endblock main-content %}
+{% block extra-js %}
+<script src="{%static 'idcops/js/Sortable.js'%}"></script>
+<script>
+  var LeftEl = document.getElementById('unused_list_fields');
+  var RightEl = document.getElementById('current_list_display')
+  new Sortable(LeftEl, {
+    group: 'shared',
+    animation: 150,
+    filter: '.control-label',
+    onAdd: function (evt) {
+      [].forEach.call(LeftEl.querySelectorAll('input[name="list_display"]'), function(item) {
+        item.setAttribute('disabled', 'disabled')
+      });
+    }  
+  });
+
+  new Sortable(RightEl, {
+    group: 'shared',
+    animation: 150,
+    filter: '.control-label',
+    onAdd: function (evt) {
+      [].forEach.call(RightEl.querySelectorAll('input[name="list_display"]'), function(item) {
+        item.removeAttribute('disabled')
+      });
+    },
+  });
+
+</script>
+{% endblock extra-js %}

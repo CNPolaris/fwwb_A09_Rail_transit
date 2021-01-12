@@ -1,0 +1,132 @@
+{% extends 'base/base.html' %}
+{% load i18n l10n admin_urls static %}
+{% load app_extras static %}
+{% block extra-css %}
+<link href="/static/idcops/css/select2.min.css" type="text/css" media="all" rel="stylesheet">
+{% endblock extra-css %}
+
+{% block content-header %}
+<h1>{{meta.verbose_name}}
+<small>
+  <b class="text-red"> {{queryset.count}} </b>单, 共有<b class="text-red"> {{total.amount__sum}} </b>件物品
+</small>
+</h1>
+{% endblock %}
+{% block main-content %}
+
+{% block form %}
+<form method="post" class="form">
+  {% csrf_token %}
+<div class="box box-warning">
+  <div class="box-header with-border">
+    <h3 class="box-title">请您确认{{action_name}}清单</h3>
+    <div class="box-tools pull-right">
+      <input type="hidden" name="action" value="{{action}}" />
+      <input type="hidden" name="post" value="yes" />
+      <input type="submit" class="btn btn-danger btn-sm margin-r-5" value="确定{{action_name}}" />
+      <a href="{%url 'idcops:list' meta.model_name%}" class="btn btn-default btn-sm">
+        <span>返回列表</span>
+      </a>
+    </div>
+  </div>
+  <div class="box-body table-responsive margin-bottom">
+  <table id="item-list" class="table table-bordered table-condensed">
+    <thead>
+      <tr class="active">
+        <th width="3%"> #</th>
+        <th>客户名称</th>
+        <th width="4%">状态</th>
+        <th>物品名称</th>
+        <th width="15%">出库物品标识</th>
+        <th width="8%">出库数量</th>
+        <th>出库备注</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for obj in queryset %}
+      {%if obj.actived%}
+      <input type="hidden" name="index" value="{{ obj.pk|unlocalize }}" />
+      <input type="hidden" name="items" value="{{obj.pk}}" />
+      <tr class="{% cycle '' 'active' %}">
+        <td style="vertical-align:middle;">{{forloop.counter}}.</td>
+        <td style="vertical-align:middle;">{{obj.client}}</td>
+        <td class="text-{{obj.state.color}}" style="vertical-align:middle;">{{obj.state}}</td>
+        <td style="vertical-align:middle;">
+          <a data-toggle="modal" data-target="#modal-lg" href="{{obj.get_absolute_url}}">{{obj}}</a>
+        </td>
+        <td class="clearfix" style="vertical-align:middle;">
+          {%if obj.get_serials_list%}
+          <select name="sn-{{obj.pk}}" class="form-control" multiple="">
+            {%for sn in obj.get_serials_list%}
+            <option value="{{sn}}">{{sn}}</option>
+            {%endfor%}
+          </select>
+          {%else%}-{%endif%}
+        </td>
+        <td style="vertical-align:middle;">
+          <input id="count-{{obj.pk}}" required="required" class="form-control" type="number" name="count-{{obj.pk}}" min="1" max="{{obj.amount}}"/>
+        </td>
+        <td style="vertical-align:middle;">
+          <textarea required="required" class="form-control" rows="3" name="comment-{{obj.pk}}"></textarea>
+        </td>
+      </tr>
+      {%endif%}
+      {%endfor%}
+    </tbody>
+  </table>
+  </div>
+
+  <div class="box-footer">
+    <div class="box-tools pull-right">
+      <b>合计：</b><span id="total"></span> 件
+    </div>
+  </div>
+</div>
+</form>
+{% endblock form %}
+{% endblock main-content %}
+
+{% block extra-js%}
+<script type="text/javascript" src="/static/idcops/js/select2.min.js"></script>
+<script type="text/javascript" src="/static/idcops/js/i18n/zh-CN.js"></script>
+<script>
+$(document).ready(function (){
+
+// reset modal cache
+$('body').on('hidden.bs.modal', '.modal', function () {
+    $(this).removeData('bs.modal');
+});
+
+
+function update_total(){
+  var inputs = document.querySelectorAll('input[name^="count-"]');
+  var total = 0;
+  [].forEach.call(inputs, function(input){
+    total = total + parseInt(input.value);
+  });
+  return total
+}
+
+var Input = $('input[type="number"]');
+if (Input.length != 0){
+  $('input[type="number"]').change(function() {
+    $("#total").html(update_total());
+  });
+}
+
+// Select2
+var Select = $("select");
+if (Select.length != 0) {
+  $("select").select2({language: "zh-CN"});
+	$("select").on("change", function(){
+    var scount = $(this).children("option:selected").length;
+    var flag = $(this).attr('name').split('-')[1];
+    $('#count-'+flag).val(scount);
+    $("#total").html(update_total());
+  });
+}
+
+});
+
+</script>
+{% endblock extra-js%}

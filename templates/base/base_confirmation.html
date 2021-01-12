@@ -1,0 +1,35 @@
+{% extends 'base/base.html' %}
+{% load i18n l10n admin_urls static %}
+{% load app_extras static %}
+{% block content-header %}
+<h1>{{meta.verbose_name}} <small> {{object}}</small></h1>
+{% endblock %}
+
+{% block main-content %}
+<div class="box box-primary">
+  <div class="box-header with-border">
+    <h3 class="box-title">您确定要 {{action_name}} 选中的所有 {{meta.verbose_name}} ？</h3>
+  </div>
+
+  {%block form%}
+  <form method="post">{% csrf_token %}
+  <div class="box-body">
+    
+    {% for obj in queryset %}
+    <p><a  data-toggle="modal" data-target="#modal-lg" href="{%url 'idcops:detail' meta.model_name obj.pk%}">{{obj}}</a></p>
+    <input type="hidden" name="index" value="{{ obj.pk|unlocalize }}" />
+    {% endfor %}
+    <input type="hidden" name="action" value="{{action}}" />
+    <input type="hidden" name="post" value="yes" />
+    <input type="submit" class="btn btn-danger btn-sm margin-r-5" value="确定{{action_name}}" />
+    <a href="{%url 'idcops:list' meta.model_name%}" class="btn btn-default btn-sm">
+      <span>返回列表</span>
+    </a>
+  </div>
+  </form>
+  {%endblock form%}
+  <div class="box-footer">
+
+  </div>
+</div>
+{% endblock main-content %}

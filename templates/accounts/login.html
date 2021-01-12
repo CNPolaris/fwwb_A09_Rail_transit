@@ -1,0 +1,58 @@
+{% extends 'accounts/base.html' %}
+{% load i18n  %}
+{% block title %}登录 数据中心运维平台 - IDCOPS{% endblock %}
+{% block body %}
+<body class="hold-transition login-page">
+<div class="login-box">
+  <div class="login-logo">
+    <a href="{% url 'transit:index' %}"><b>idcops</b></a>
+  </div>
+    {% if messages %}
+        {% for message in messages %}
+        <div id="message" class="alert alert-{% if message.tags %}{{ message.tags }}{% endif %} alert-dismissible no-margin">
+          {{ message }}
+        </div>
+        {% endfor %}
+    {% endif %}
+  <!-- /.login-logo -->
+  <div class="login-box-body">
+    <p class="login-box-msg">登入系统</p>
+{% if form.errors and not form.non_field_errors %}
+<p class="error">
+{% if form.errors.items|length == 1 %}{% trans "Please correct the error below." %}{% else %}{% trans "Please correct the errors below." %}{% endif %}
+</p>
+{% endif %}
+{% if form.non_field_errors %}
+{% for error in form.non_field_errors %}
+<p class="error">
+    {{ error }}
+</p>
+{% endfor %}
+{% endif %}
+    <form action="{% url 'transit:login' %}" method="post">{% csrf_token %}
+      <div class="form-group has-feedback">
+        <input type="text" id="id_username" name="username" class="form-control" autocomplete="off" autofocus="autofocus" placeholder="工号">
+        <span class="glyphicon glyphicon-envelope form-control-feedback"></span>
+      </div>
+      <div class="form-group has-feedback">
+        <input type="text"  onfocus="this.type='password'" id="id_password" name="password" class="form-control" autocomplete="off" placeholder="登录密码">
+        <span class="glyphicon glyphicon-lock form-control-feedback"></span>
+      </div>
+      <input type="hidden" name="next" value="{{ next }}" />
+        <!-- /.col -->
+    <div class="row">
+    <div class="col-xs-8"></div>
+        <div class="col-xs-4">
+          <button type="submit" class="btn btn-primary btn-block btn-flat">登录</button>
+        </div>
+        <!-- /.col -->
+      </div>
+    </form>
+    <a href="{% url 'transit:password_reset' %}">{% trans 'Forgotten your password or username?' %}</a>
+  </div>
+  <!-- /.login-box-body -->
+</div>
+<!-- /.login-box -->
+</body>
+{% endblock %}
+</html>

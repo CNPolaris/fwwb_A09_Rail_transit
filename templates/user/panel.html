@@ -1,0 +1,39 @@
+{% load static cache %}
+{% cache 180 user-panel request.user.id request.user.onidc request.user.slaveidc.all.count %}
+<a href="#" class="dropdown-toggle" data-toggle="dropdown">
+  <img src="/static/idcops/img/user2-160x160.jpg" class="user-image" alt="User Image">
+  <span class="hidden-xs">{{request.user}}</span>
+</a>
+<ul class="dropdown-menu">
+  <li class="user-header">
+    <img src="/static/idcops/img/user2-160x160.jpg" class="img-circle" alt="User Image">
+    <p>{{request.user.mobile}}<small>{{request.user.email}}</small></p>
+  </li>
+  <li class="user-body">
+    <!-- <div class="row">
+      <div class="col-xs-4 text-center">
+        <a href="#">1</a>
+      </div>
+      <div class="col-xs-4 text-center">
+        <a href="#">Sales</a>
+      </div>
+      <div class="col-xs-4 text-center">
+        <a href="#"> 2</a>
+      </div>
+    </div> -->
+  </li>
+  <li class="user-footer">
+    <div class="pull-left">
+      <a href="{%url 'transit:password_change'%}" class="btn btn-default btn-flat margin-r-5">修改密码</a>
+      {%if request.user.slaveidc.all.count >= 1%}
+      <a class="btn btn-default btn-flat" href="{%url 'transit:switch_onidc' %}" data-toggle="modal" data-target="#modal-lg-static">
+        <i class="fa fa-switch"></i><span> 切换机房</span>
+      </a>
+      {%endif%}
+    </div>
+    <div class="pull-right">
+      <a href="{%url 'transit:logout'%}" class="btn btn-default btn-flat">退出</a>
+    </div>
+  </li>
+</ul>
+{% endcache %}

@@ -1,0 +1,59 @@
+{% extends 'base/base.html' %}
+{% load i18n l10n admin_urls static %}
+{% load app_extras static %}
+{% block extra-css %}
+{% endblock extra-css %}
+{% block title %}详情 {{meta.title}}{% endblock %}
+{% block content-header %}
+<h1>{{meta.verbose_name}} <small> {{object}}</small></h1>
+{% endblock %}
+
+{% block main-content %}
+<div class="box box-primary">
+  <div class="box-header with-border">
+    <h3 class="box-title">您确定要 <b>{{action_name}}</b> 选中的所有 {{meta.verbose_name}} ？</h3>
+  </div>
+  <div class="box-body">
+{% if perms_lacking %}
+    <p>{% blocktrans %}Deleting the selected {{ objects_name }} would result in deleting related objects, but your account doesn't have permission to delete the following types of objects:{% endblocktrans %}</p>
+    <ul>
+    {% for obj in perms_lacking %}
+        <li>{{ obj }}</li>
+    {% endfor %}
+    </ul>
+{% elif protected %}
+    <p>{% blocktrans %}Deleting the selected {{ objects_name }} would require deleting the following protected related objects:{% endblocktrans %}</p>
+    <ul>
+    {% for obj in protected %}
+        <li>{{ obj }}</li>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p>{% blocktrans %}Are you sure you want to delete the selected {{ objects_name }}? All of the following objects and their related items will be deleted:{% endblocktrans %}</p>
+    {% load i18n %}
+    <h2>{% trans "Summary" %}</h2>
+    <ul>
+        {% for model_name, object_count in model_count %}
+        <li>{{ model_name|capfirst }}: {{ object_count }}</li>
+        {% endfor %}
+    </ul>
+
+    <h2>{% trans "Objects" %}</h2>
+    {% for obj in queryset %}
+      <ul><a data-toggle="modal" data-target="#modal-lg" href="{%url 'idcops:detail' meta.model_name obj.pk%}">{{obj}}</a></ul>
+    {% endfor %}
+    <form method="post">{% csrf_token %}
+    {% for obj in queryset %}
+    <input type="hidden" name="index" value="{{ obj.pk|unlocalize }}" />
+    {% endfor %}
+    <input type="hidden" name="action" value="delete" />
+    <input type="hidden" name="post" value="yes" />
+    <input type="submit" class="btn btn-danger btn-sm margin-r-5" value="确定{{action_name}}" />
+    <a href="{%url 'idcops:list' meta.model_name%}" class="btn btn-default btn-sm">
+      <span>返回列表</span>
+    </a>
+    </form>
+{% endif %}
+</div>
+</div>
+{% endblock main-content  %}

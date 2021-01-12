@@ -1,0 +1,9 @@
+{% extends 'base/base.html' %}
+{% block title %}个人设置 数据中心运维平台 - IDCOPS{% endblock %}
+{% block content-header %}<h1>用户中心 <small> 个人设置</small></h1>{% endblock %}
+{% block breadcrumb %}
+<li><a href="{% url 'transit:index' %}"><i class="fa fa-dashboard"></i>
+  {% if meta %}{{meta.logo}}{% else %}仪表盘{% endif %}
+</a></li>
+<li class="active"><i class="{{meta.icon}}"></i> 个人设置</li>
+{% endblock %}

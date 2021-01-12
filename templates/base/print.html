@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <!-- Tell the browser to be responsive to screen width -->
+  <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+  <title>{%for obj in object_list%}{% if forloop.first %}{{obj.client.desc}}-{{obj.get_status_display|cut:"已"}}设备确认单{%endif%}{%endfor%}</title>
+  {% load staticfiles %}
+  <!-- Bootstrap 3.3.6 -->
+  <link rel="stylesheet" href="{% static "idcops/css/bootstrap.min.css" %}">
+  <link rel="stylesheet" href="{% static "idcops/css/AdminLTE.min.css" %}">
+
+  <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+  <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+  <!--[if lt IE 9]>
+  <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
+  <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+  <![endif]-->
+
+</style>
+</head>
+<body onload="window.print();">
+<!--body-->
+<div class="wrapper">
+<div class="container" style="width:95%;">
+</br>
+
+<table id="header" class="table table-bordered table-condensed">
+<tr>
+
+<td rowspan="4"><img src="{% static "idcops/img/logo.jpg" %}" width="200px" class="img-responsive" alt="idcops Logo"></td>
+<tr>
+<td class="no-padding"><b>文件编号</b></td>
+<td class="no-padding">IDC-SOP-RCD-001</td>
+</tr>
+<tr>
+<td class="no-padding"><b>所有者</b></td>
+<td class="no-padding">机房服务部</td>
+</tr>
+<tr>
+<td class="no-padding"><b>批准人</b></td>
+<td class="no-padding">总经理</td>
+</tr>
+</tr>
+<tr>
+<td rowspan="3"><font size="5"><b><span>设 备 拆 装 服 务 确 认 单</span></b></font></td>
+<tr>
+<td class="no-padding"><b>生效日期</b></td>
+<td class="no-padding">2003/07/28</td>
+</tr>
+<tr>
+<td class="no-padding"><b>发布范围</b></td>
+<td class="no-padding">机房服务部</td>
+</tr>
+
+</tr>
+</table>
+
+<b>{%for obj in object_list%}{% if forloop.first %}
+1、客户名称：{{obj.client.desc}}<br>
+2、服务类型：{{obj.client.get_style_display}}<br>
+3、操作类型：{{obj.get_status_display|cut:"已"}}<br>
+4、设备数量：{{object_list.count}} 台<br>
+</b>{%endif%}{%endfor%}
+<table id="objects" class="table table-bordered table-condensed" style="table-layout:fixed;">
+        <thead>
+            <tr class="bg-info">
+                <th width="4%">#</th>
+                <th>设备型号</th>
+                <th>设备编号</th>
+                <th>设备SN号</th>
+                <th>设备IP地址</th>
+                <th>机柜编号</th>
+                <th width="6%">U数</th>
+                <th width="7%">U位</th>
+            </tr>
+        </thead>
+    <tbody>
+	{% for obj in object_list %}
+        <tr>
+            <td class="no-padding">{{forloop.counter}}</td>
+            <td class="no-padding" style="word-break : break-all;">{{obj.model}}</td>
+            <td class="no-padding" style="word-break : break-all;">{{obj.name}}</td>
+	          <td class="no-padding" style="word-break : break-all;">{%if obj.sn|first == '_' %}无法查看{%else%}{{ obj.sn|upper }}{%endif%}</td>
+            <td class="no-padding" style="word-break : break-all;">{{obj.ipaddr}}</td>
+            <td class="no-padding" style="word-break : break-all;">{{obj.rack.name}}</td>
+            <td class="no-padding">{{obj.units.all.count}}</td>
+            <td class="no-padding" style="word-break : break-all;">{{obj.get_units}}</td>
+        </tr>
+	{% endfor %}
+    </tbody>
+</table>
+
+<b>5、客户评价：</b>
+<table id="service" class="table table-bordered table-condensed" style="table-layout:fixed;>
+        <thead>
+            <tr class="no-padding bg-info">
+                <th width="12%">评价项目</th>
+                <th width="12%">满意</th>
+                <th width="12%">一般</th>
+                <th width="12%">不满意</th>
+                <th>意见及建议</th>
+            </tr>
+        </thead>
+    <tbody>
+        <tr>
+            <td class="no-padding">态度</td>
+            <td class="no-padding"></td>
+            <td class="no-padding"></td>
+            <td class="no-padding"></td>
+            <td class="no-padding"></td>
+        </tr>
+        <tr>
+            <td class="no-padding">响应时间</td>
+            <td class="no-padding"></td>
+            <td class="no-padding"></td>
+            <td class="no-padding"></td>
+            <td class="no-padding"></td>
+        </tr>
+        <tr>
+            <td class="no-padding">实施时间</td>
+            <td class="no-padding"></td>
+            <td class="no-padding"></td>
+            <td class="no-padding"></td>
+            <td class="no-padding"></td>
+        </tr>
+        <tr>
+            <td class="no-padding">工作质量</td>
+            <td class="no-padding"></td>
+            <td class="no-padding"></td>
+            <td class="no-padding"></td>
+            <td class="no-padding"></td>
+        </tr>
+    </tbody>
+</table>
+
+<b>6、经办人信息：</b><br>
+ 请确认以上表中信息与设备实际情况相符合后再签字。如对以上信息进行调整请在当日通知世纪互联。
+<table id="attending" class="table table-bordered text-center table-condensed" style="table-layout:fixed;>
+        <thead class="text-center">
+            <tr class="bg-info">
+                <th class="text-center" colspan="2">客户方</th>
+                <th class="text-center" colspan="2">世纪互联</th>
+            </tr>
+        </thead>
+    <tbody>
+        <tr>
+            <td class="no-padding" width= "20%">经办人签字</td>
+            <td class="no-padding" width= "30%"></td>
+            <td class="no-padding" width= "20%">经办人签字、盖章</td>
+            <td class="no-padding" width= "30%">{{request.user.last_name}}{{request.user.first_name}}</td>
+        </tr>
+        <tr>
+            <td class="no-padding" width= "20%">手机/电话</td>
+            <td class="no-padding" width= "30%"></td>
+            <td class="no-padding" width= "20%">电话/分机</td>
+            <td class="no-padding" width= "30%">400-651-9966</td>
+        </tr>
+        <tr>
+            <td class="no-padding" width= "20%">经办日期</td>
+            <td class="no-padding" width= "30%">{% now "Y/m/d" %}</td>
+            <td class="no-padding" width= "20%">经办日期</td>
+            <td class="no-padding" width= "30%">{% now "Y/m/d" %}</td>
+        </tr>
+    </tbody>
+</table>
+
+注：本表一式两份，世纪互联与客户方各持一份，具有同等效力。
+<br><br><br>
+</div>
+</div>
+<!-- ./wrapper -->
+</body>
+</html>

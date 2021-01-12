@@ -1,0 +1,40 @@
+{% block main-content %}
+<div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+    <h4 class="modal-title">
+      <span> 新建{{meta.verbose_name}} </span>
+    </h4>
+</div>
+<form action="{%url 'idcops:new' meta.model_name%}?rack_id={{request.GET.rack_id}}" method="POST" role="form" class="form-horizontal" id="{{meta.model_name}}-new">
+  <div class="box-body">
+    {% csrf_token %}
+    {% for hidden in form.hidden_fields %}
+      {{ hidden }}
+    {% endfor %}
+    {% for field in form.visible_fields %}
+    <div class="form-group">
+      <label for="{{ field.id_for_label }}" class="col-sm-2 control-label">
+        {{ field.label }}
+      </label>
+      <div class="col-sm-5">
+      {{ field }}
+      </div>
+      <div class="col-sm-5 help-block">
+        {%if field.field.required%}<span class="text-red">必填 </span>{%endif%}
+          {{ field.help_text|safe}}
+      <div class="text-red">{{ field.errors|safe }}</div>
+      </div>
+    </div>
+    {% endfor %}
+    </div>
+    <div class="box-footer">
+      <button type="button" class="btn btn-default btn-sm" onclick="window.history.go(-1)">取消并返回</button>
+      <div class="pull-right">
+        <button type="submit" name="_last" class="btn btn-info btn-sm margin-r-5">保存并刷新</button>
+        <button type="submit" name="_saverlist" class="btn btn-info btn-sm margin-r-5">保存</button>
+        <button type="submit" name="_addanother" class="btn btn-info btn-sm margin-r-5">保存并新增</button>
+        <button type="submit" name="_saverview" class="btn btn-info btn-sm">保存并查看</button>
+      </div>
+    </div>
+</form>
+{% endblock main-content %}

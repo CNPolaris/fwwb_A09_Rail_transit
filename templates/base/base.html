@@ -1,0 +1,125 @@
+<!--载入静态资源-->
+{% load static %}
+<!DOCTYPE html>
+<!--网站主语言-->
+<html lang="zh-cn">
+<head>
+    <!-- 网站采用的字符编码 -->
+    <meta charset="utf-8" name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1, maximum-scale=1, user-scalable=no"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+    <!-- 预留网站标题的位置 -->
+    <title>{% block title %}{% endblock %}</title>
+    <!-- 引入bootstrap的css文件 -->
+    <script src="{% static 'echarts/echarts.min.js' %}"></script>
+    <link rel="stylesheet" href="{% static 'prism/prism.css' %}">
+    <link rel="stylesheet" href="{% static 'bootstrap/css/bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'css/font-awesome.css' %}">
+    {% block extra-css %}{% endblock %}
+    <link rel="stylesheet" href="{% static 'css/AdminLTE.min.css' %}">
+      <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+      <![endif]-->
+
+    <style type="text/css">
+        .icon {
+           width: 1em; height: 1em;
+           vertical-align: -0.15em;
+           fill: currentColor;
+           overflow: hidden;
+        }
+      body {
+          font-family:-apple-system,BlinkMacSystemFont,Helvetica Neue,PingFang SC,Microsoft YaHei,Source Han Sans SC,Noto Sans CJK SC,WenQuanYi Micro Hei,sans-serif;
+    }
+      @media print {
+        a[href]:after {
+          content: none !important;
+        }
+      }
+
+    </style>
+</head>
+<body class="hold-transition skin-blue sidebar-mini">
+    <div class="wrapper" style="height: auto; min-height: 100%;">
+    {% include 'header.html' %}
+    <!--左侧导航栏-->
+      <aside class="main-sidebar no-print">
+        {% block main-sidebar %}
+        <section class="sidebar" id="side">
+          <ul class="sidebar-menu" data-widget="tree">
+              <li class="header"></li>
+            {%for menu in menus %}
+              <li{%if m.model_name in request.path %} class="active"{%endif%}>
+                <a href="/list/{{menu.model_name}}/">
+                  <i class="{{menu.icon}} {{menu.icon_color}}"></i>
+                  <span>{{menu.verbose}}</span></a>
+              </li>
+            {%endfor%}
+          </ul>
+        </section>
+        {% endblock main-sidebar%}
+      </aside>
+    <!--监控平台主页-->
+      <div class="content-wrapper">
+    <section class="content-header">
+    {% block content-header %}<h1>客流实时监控平台 <small> 轨道交通客流监控</small></h1>{% endblock %}
+      <ol class="breadcrumb">
+        {% block breadcrumb %}
+        <li><a href="{% url 'transit:index' %}"><i class="fa fa-dashboard"></i>
+          {% if meta %}{{meta.logo}}{% else %}仪表盘{% endif %}
+        </a></li>
+        <li class="active"><i class="{{meta.icon}}"></i> {{meta.verbose_name}}</li>
+        {% endblock %}
+      </ol>
+    </section>
+    <section class="content container-fluid">
+     {%if messages%}
+        {%for message in messages%}
+        <div style="padding:10px; margin-bottom:15px;" class="alert alert-{% if message.tags %}{{ message.tags }}{% endif %} no-print">
+          <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
+          <b>{{message}}</b>
+        </div>
+        {%endfor%}
+      {%endif%}
+    {% block main-content %}{%endblock%}
+    <div class="modal fade" id="modal-lg" role="dialog" aria-labelledby="modal-lg" aria-hidden="true" tabindex="-1">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+        <!-- link to object detail -->
+        </div>
+      </div>
+    </div>
+    <div class="modal fade" id="modal-lg-static" tabindex="-1" role="dialog" data-keyboard="false" data-backdrop="static" aria-labelledby="modal-lg-static" aria-hidden="true" style="z-index: 1060;">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+        <!-- link to object detail -->
+        </div>
+      </div>
+    </div>
+    <div class="modal fade" id="modal-static" tabindex="-1" role="dialog" data-keyboard="false" data-backdrop="static" aria-labelledby="modal-static" aria-hidden="true" style="z-index: 1060;">
+      <div class="modal-dialog">
+        <div class="modal-content">
+        <!-- link to object detail -->
+        </div>
+      </div>
+    </div>
+    </section>
+  </div>
+
+
+    <!-- 页脚 -->
+      {% include 'footer.html' %}
+    </div>
+    <!-- bootstrap.js 依赖 jquery.js 和 popper.js,在此引入 -->
+    <script src="{% static 'jquery/jquery-3.5.1.js' %}"></script>
+    <script src="{% static 'popper/popper-2.4.4.js' %}"></script>
+    <!-- 引入bootstrap的js文件 -->
+    <script src="{% static 'bootstrap/js/bootstrap.min.js' %}"></script>
+    <!-- 引入layer.js-->
+    <script src="{% static 'layer/layer.js' %}"></script>
+    <script src="{% static 'js/adminlte.min.js' %}"></script>
+    <script src="https://at.alicdn.com/t/font_2311198_m8ax153o4xf.js"></script>
+    {% block extra-js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,102 @@
+{% extends 'base/base.html' %}
+{% load app_extras static %}
+{% block extra-css %}
+{% endblock extra-css %}
+{% block title %}详情 {{meta.title}}{% endblock %}
+{% block content-header %}<h1>{{meta.verbose_name}} <small> {{object}} 详情</small></h1>{% endblock %}
+{% block main-content %}
+<div class="box box-{%if object.actived%}success{%else%}danger{%endif%}">
+  <form method="post" action="{%url 'idcops:list' meta.model_name%}">
+    {% csrf_token %}
+    <input type="hidden" name="index" value="{{object.pk}}">
+    <div class="box-header with-border">
+      <h3 class="box-title">
+        {{object.title_description}}
+      </h3>
+      <div class="box-tools pull-right no-print hidden-xs">
+        {%block box-tools-extra%}
+
+        {%endblock box-tools-extra%}
+
+        <div class="btn-group">
+          {%if 'idcops.change_'|add:meta.model_name in perms and can_change%}
+          <a class="btn btn-default btn-sm" title="编辑 {{object}}" href="{%url 'idcops:update' meta.model_name object.pk%}">
+            <i class="fa fa-edit"></i><span> 编辑</span>
+          </a>
+          {%endif%}
+          <button type="button" class="btn btn-default btn-sm" onclick="window.history.go(-1)">
+            <i class="fa fa-arrow-circle-o-left"></i><span> 返回上一页</span>
+          </button>
+        </div>
+
+      </div>
+
+    </div>
+  </form>
+
+  <div class="box-body">
+    <table class="table table-bordered table-condensed nowarp">
+      <tbody>{{object_as_table}}</tbody>
+    </table>
+    <div class="table-responsive margin-bottom">
+      {%block object_after%}
+      {%endblock object_after%}
+
+      {%block object_note%}
+      {%if object.remarks%}
+      <br>
+      <b>备注信息:</b>
+      <table class="table table-bordered table-condensed nowarp">
+        <thead>
+          <tr class="active">
+            <th width="3%">#</th>
+            <th width="20%">备注信息</th>
+            <th>备注内容</th>
+            <th width="5%">操作</th>
+          </tr>
+        </thead>
+        <tbody>
+        {%for remark in object.remarks%}
+          <tr class="{% cycle '' 'active' %}">
+            <td>{{forloop.revcounter}}.</td>
+            <td>{{remark.created}}<small> {{remark.creator}}</small></td>
+            <td>{{remark.content|safe}}</td>
+            <td>
+              <a data-toggle="modal" data-target="#modal-lg-static" class="label text-red" href="{%url 'idcops:detail' 'comment' remark.id%}">
+                <i class="fa fa-trash"></i> 删除
+              </a>
+            </td>
+          </tr>
+        {%endfor%}
+        </tbody>
+      </table>
+    </div>
+    {%endif%}
+
+    {%if 'idcops.add_comment' in perms%}
+    <form class="form no-print margin-bottom" action="{%url 'idcops:detail' meta.model_name object.pk%}" method="POST">
+    {% csrf_token %}
+      <div class="input-group">
+        <textarea id="id_content" name="content" class="form-control" required rows="3" placeholder="给 {{object}} 添加备注"></textarea>
+        <span class="input-group-btn">
+          <button style="padding: 26px 12px;" type="submit" name="_saverview" class="btn btn-primary">提交</button>
+        </span>
+      </div>
+    </form>
+    {%endif%}
+  {%endblock object_note%}
+
+  {% block page-extra %}
+  {% endblock %}
+  </div>
+</div>
+{% endblock %}
+{% block extra-js %}
+<script>
+  $(document).ready(function() {
+    $('body').on('hidden.bs.modal', '.modal', function () {
+        $(this).removeData('bs.modal');
+    });
+  });
+</script>
+{% endblock %}
