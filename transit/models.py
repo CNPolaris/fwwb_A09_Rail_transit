@@ -8,51 +8,51 @@ from django.utils import timezone
 # 用户的model
 class Users(models.Model):
     # 用户编号
-    user_id = models.CharField(primary_key=True, max_length=255)
+    user_id = models.CharField(primary_key=True, max_length=255, verbose_name="用户编号")
     # 区域
-    dist = models.IntegerField()
+    dist = models.IntegerField(verbose_name="区域")
     # 出生日期
-    birth = models.IntegerField()
+    birth = models.IntegerField(verbose_name="出生日期")
     # 性别
-    gender = models.IntegerField()
+    gender = models.IntegerField(verbose_name="性别")
 
 
 # 站点的model
 class Station(models.Model):
     # 站点编号
-    station_id = models.IntegerField(primary_key=True)
+    station_id = models.IntegerField(primary_key=True, verbose_name="站点编号")
     # 站点名称
-    station_name = models.CharField(max_length=255)
+    station_name = models.CharField(max_length=255, verbose_name="站点名称")
     # 路线
-    station_route = models.CharField(max_length=100)
+    station_route = models.CharField(max_length=100, verbose_name="行驶路线")
     # 行政区域
-    admin_area = models.CharField(max_length=100)
+    admin_area = models.CharField(max_length=100, verbose_name="行政区域")
 
 
 # 乘车记录的model
 class Trips(models.Model):
     # 乘客编号
-    user_id = models.ForeignKey(Users, on_delete=models.CASCADE)
+    user_id = models.ForeignKey(Users, on_delete=models.CASCADE, verbose_name="乘客编号")
     # 进站名
-    in_station = models.CharField(max_length=255)
+    in_station = models.CharField(max_length=255, verbose_name="入站点")
     # 进站时间
-    in_station_time = models.DateTimeField()
+    in_station_time = models.DateTimeField(verbose_name="进站时间")
     # 出站名
-    out_station = models.CharField(max_length=255)
+    out_station = models.CharField(max_length=255, verbose_name="出站点")
     # 出站时间
-    out_station_time = models.DateTimeField()
+    out_station_time = models.DateTimeField(verbose_name="出站时间")
     # 购票渠道
-    channel = models.IntegerField()
+    channel = models.IntegerField(verbose_name="购票渠道")
     # 票价
-    price = models.FloatField()
+    price = models.FloatField(verbose_name="票价")
 
 
 # 每日客流量实时统计
 class TripStatistics(models.Model):
     # 日期
-    date = models.DateField(timezone.now().strftime("%Y-%m-%d"), primary_key=True)
+    date = models.DateField(primary_key=True, verbose_name="日期")
     # 实时出行统计
-    count = models.IntegerField()
+    count = models.IntegerField(verbose_name="客流统计")
 
     class Meta:
         ordering = ["-date"]
@@ -61,9 +61,9 @@ class TripStatistics(models.Model):
 # 节日的model
 class Workdays(models.Model):
     # 日期
-    date = models.DateField(primary_key=True)
+    date = models.DateField(primary_key=True, verbose_name="日期")
     # 节日
-    date_class = models.CharField(max_length=255, blank=True)
+    date_class = models.CharField(max_length=255, blank=True, verbose_name="日期属性")
 
     # 按照日期进行降序排列
     class Meta:
@@ -73,9 +73,9 @@ class Workdays(models.Model):
 # list model
 class Menu(models.Model):
     model_name = models.CharField(max_length=50, verbose_name="模块名称")
-    model_verbose = models.CharField(max_length=50)
-    icon = models.CharField(max_length=20)
-    icon_color = models.CharField(max_length=50)
+    model_verbose = models.CharField(max_length=50, verbose_name="模块说明")
+    icon = models.CharField(max_length=20, verbose_name="图标")
+    icon_color = models.CharField(max_length=50, verbose_name="图标颜色")
 
 
 @receiver(post_save, sender=Trips)
