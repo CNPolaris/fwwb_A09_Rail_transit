@@ -1,1 +1,73 @@
 {% extends 'base/base.html' %}
+{% load static i18n %}
+{% block extra-css %}
+    <style>
+    @media print {
+      a[href]:after {
+        content: none !important;
+      }
+      th {
+        padding: 3px 4px !important;
+      }
+      td {
+        padding: 2px 4px !important;
+      }
+      footer {
+        padding: 10px 15px !important;
+      }
+    }
+    .table>thead:first-child>tr:first-child>th>a {
+      color: #333 !important;
+    }
+    .table>thead:first-child>tr:first-child>th>a:hover,
+    .table>thead:first-child>tr:first-child>th>a:active,
+    .table>thead:first-child>tr:first-child>th>a:focus {
+      color: #111 !important;
+    }
+    </style>
+{% endblock %}
+
+
+{% block main-content %}
+    <form id="action-form" action="" METHOD="POST">
+        {% csrf_token %}
+        <div class="box">
+            <div class="box-body table-responsive">
+                <table id="objects-list" class="table table-bordered table-hover table-condensed text-nowrap">
+                  <thead>
+                    <tr>
+                    {%for item in thead%}
+                      <th scope="col" name="{{item.field}}" {{item.class_attrib}}>
+                        {%if item.sortable%}
+                          {%if item.is_sorted%}
+                          <a title="正反序切换" href="{{item.toggle_link}}">{{item.text}}
+                            <i class="fa fa-sort-alpha-{{item.sorted_key}}"></i>
+                          </a>
+                          <span class="no-print hidden-xs pull-right">
+                            <a title="移除本列排序" href="{{item.remove_link}}">
+                            <i class="fa fa-remove text-danger"></i>
+                            </a>
+                          </span>
+                          {%else%}
+                          <a title="点击可排序" href="{{item.toggle_link}}">{{item.text}}</a>
+                          {%endif%}
+                        {%else%}
+                          {{item.text}}
+                        {%endif%}
+                      </th>
+                    {%endfor%}
+                    </tr>
+                  </thead>
+                  <tbody>
+                  {%block objects-list%}
+                    {%for obj in tbody%}
+                      <tr>{{obj}}</tr>
+                    {%endfor%}
+                  {%endblock%}
+                  </tbody>
+                </table>
+            </div>
+
+        </div>
+    </form>
+{% endblock main-content %}
