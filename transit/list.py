@@ -2,13 +2,14 @@
 # @Time    : 2021/1/12 20:02
 # @FileName: list.py
 # @Author  : CNPolaris
+from django.contrib import messages
 from django.utils.functional import cached_property
 from django.utils.safestring import mark_safe
 from django.views.generic import TemplateView, ListView
 from django.contrib.admin.utils import label_for_field
 from django.utils.html import format_html
 
-from transit.lib.utils import fields_for_model
+from transit.lib.utils import fields_for_model, make_tbody_tr, nature_field_name
 from transit.mixins import BaseRequiredMixin, get_user_config
 from django.core.cache import cache, utils
 from django.utils.http import urlencode
@@ -62,6 +63,21 @@ class ListModelView(BaseRequiredMixin, ListView):
         # TODO：补充多重字段筛选
         fields = self.default_list_fields
         return fields
+
+    def get_paginate_by(self, queryset):
+        """
+        获取每页显示多少
+        :param queryset:
+        :return: int e.g 20
+        """
+        self.paginate_by = self.request.GET.get(_PAGINATE, 20)
+        if int(self.paginate_by) > 100:
+            messages.warning(
+                self.request,
+                "仅允许每页最多显示100条数据, 已为您显示100条."
+            )
+            self.paginate_by = 100
+        return self.paginate_by
 
     @cached_property
     def get_params(self):
@@ -218,10 +234,76 @@ class ListModelView(BaseRequiredMixin, ListView):
 
             }
 
+    def make_paginate(self, max_size):
+        """
+        制作每个数据页有多少条数据的html
+        :param max_size:
+        :return:
+        """
+        request_size = int(self.paginate_by)
+        if max_size <= request_size:
+            return False
+        else:
+            min_size = 10
+            max_size = max_size if max_size <= 100 else 100
+            burst = len(str(max_size)) + 2
+            rate = round(max_size / burst)
+            ranges = [i for i in range(min_size, max_size, int(rate))]
+            ranges.append(max_size)
+            html = ''
+            for p in ranges:
+                url = self.get_query_string({'paginate_by': p})
+                li = '<li><a href="{}">显示{}项</a></li>'.format(url, p)
+                html += li
+            return mark_safe(html)
+
+    @property
+    def display_link_field(self):
+        """
+        显示链接字段
+        :return: e.g <class 'transit.models.Trips'>
+        """
+        return nature_field_name(self.model)
+
+    @property
+    def list_only_date(self):
+        """
+        判断是否默认按照日期列表
+        :return: bool
+        """
+        try:
+            config = self._config.get('list_only_date', 1)
+            only_date = bool(int(config))
+        except Exception:
+            only_date = True
+        return only_date
+
+    def make_tbody(self, objects):
+        """
+        制作数据表主体
+        :param objects:
+        :return:
+        """
+        extra_fields = ['field-first', 'field-second', 'field-last']
+        fields = self.get_list_fields
+        _only_date = self.list_only_date
+        _verbose_name = self.verbose_name
+        _model_name = self.model_name
+        to_field_name = self.display_link_field
+        for index, obj in enumerate(objects, 1):
+            yield make_tbody_tr(
+                self, obj, index, fields, extra_fields, _only_date,
+                _verbose_name, _model_name, to_field_name
+            )
+
     def get_context_data(self, *, object_list=None, **kwargs):
         context = super(ListModelView, self).get_context_data(**kwargs)
+        objects = context.get('object_list')
+
         _extra = {
             'thead': self.make_thead(),
+            'tbody': self.make_tbody(objects),
+            'paginate': self.make_paginate(self.object_list.count())
         }
         context.update(**_extra)
         return context
