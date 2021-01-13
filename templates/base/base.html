@@ -53,7 +53,7 @@
               <li{%if m.model_name in request.path %} class="active"{%endif%}>
                 <a href="/list/{{menu.model_name}}/">
                   <i class="{{menu.icon}} {{menu.icon_color}}"></i>
-                  <span>{{menu.verbose}}</span></a>
+                  <span>{{menu.verbose_name}}</span></a>
               </li>
             {%endfor%}
           </ul>

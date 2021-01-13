@@ -24,7 +24,7 @@ def construct_menus():
     menus = [
         {
             'model_name': menu.model_name,
-            'verbose': menu.model_verbose,
+            'verbose_name': menu.model_verbose,
             'icon': menu.icon,
             'icon_color': menu.icon_color
         } for menu in Menu_list
