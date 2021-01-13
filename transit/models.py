@@ -1,11 +1,14 @@
 from django.db import models
 from django.db.models.signals import post_save, post_delete
 from django.dispatch.dispatcher import receiver
+from django.urls import reverse_lazy
 from django.utils import timezone
-
 
 # Create your models here.
 # 用户的model
+from django.utils.functional import cached_property
+
+
 class Users(models.Model):
     # 用户编号
     user_id = models.CharField(primary_key=True, max_length=255, verbose_name="用户编号")
@@ -15,6 +18,9 @@ class Users(models.Model):
     birth = models.IntegerField(verbose_name="出生日期")
     # 性别
     gender = models.IntegerField(verbose_name="性别")
+
+    class Meta:
+        default_permissions = ('view', 'add', 'change', 'delete', 'exports')
 
 
 # 站点的model
@@ -27,6 +33,9 @@ class Station(models.Model):
     station_route = models.CharField(max_length=100, verbose_name="行驶路线")
     # 行政区域
     admin_area = models.CharField(max_length=100, verbose_name="行政区域")
+
+    class Meta:
+        default_permissions = ('view', 'add', 'change', 'delete', 'exports')
 
 
 # 乘车记录的model
@@ -46,6 +55,23 @@ class Trips(models.Model):
     # 票价
     price = models.FloatField(verbose_name="票价")
 
+    class Meta:
+        default_permissions = ('view', 'add', 'change', 'delete', 'exports')
+
+    @cached_property
+    def get_absolute_url(self):
+        opts = self._meta
+        # if opts.proxy:
+        #    opts = opts.concrete_model._meta
+        url = reverse_lazy('transit:detail', args=[opts.model_name, self.pk])
+        return url
+
+    @cached_property
+    def get_edit_url(self):
+        opts = self._meta
+        url = reverse_lazy('transit:update', args=[opts.model_name, self.pk])
+        return url
+
 
 # 每日客流量实时统计
 class TripStatistics(models.Model):
@@ -56,6 +82,7 @@ class TripStatistics(models.Model):
 
     class Meta:
         ordering = ["-date"]
+        default_permissions = ('view', 'add', 'change', 'delete', 'exports')
 
 
 # 节日的model
@@ -68,6 +95,7 @@ class Workdays(models.Model):
     # 按照日期进行降序排列
     class Meta:
         ordering = ['-date']
+        default_permissions = ('view', 'add', 'change', 'delete', 'exports')
 
 
 # list model
@@ -76,6 +104,9 @@ class Menu(models.Model):
     model_verbose = models.CharField(max_length=50, verbose_name="模块说明")
     icon = models.CharField(max_length=20, verbose_name="图标")
     icon_color = models.CharField(max_length=50, verbose_name="图标颜色")
+
+    class Meta:
+        default_permissions = ('view', 'add', 'change', 'delete', 'exports')
 
 
 @receiver(post_save, sender=Trips)
