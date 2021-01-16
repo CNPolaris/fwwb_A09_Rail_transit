@@ -51,6 +51,44 @@
     <form id="action-form" action="" METHOD="POST">
         {% csrf_token %}
         <div class="box">
+            {% block box-header %}
+            <div class="box-header with-border no-print clearfix">
+              <div id="table-tools" class="pull-left">
+
+                {%if can_create%}
+                <a class="btn btn-default btn-sm margin-r-5" href="{%url 'transit:new' meta.model_name %}">
+                  <i class="fa fa-plus"></i><span class="hidden-xs"> 新建</span>
+                </a>
+                {%endif%}
+
+                <!--button type="submit" disabled="disabled" name="action" value="print" class="action-related disabled btn btn-default btn-sm margin-r-5">
+                  <i class="fa fa-print"></i><span class="hidden-xs"> 打印</span>
+                </button-->
+
+                {% block table-sub-tools %}
+                  {%if actions%}
+                  {% for a in actions%}
+                      <button type="submit" disabled="disabled" name="action" value="{{ a.1 }}" class="action-related disabled btn btn-default btn-sm margin-r-5">
+                         <i class="{{a.2}}"></i><span class="hidden-xs"> {{ a.3 }}</span>
+                      </button>
+                  {%endfor%}
+                  {%endif%}
+                {% endblock table-sub-tools %}
+
+              </div>
+              {% block search %}
+              <div class="pull-right">
+                <div id="search" class="input-group input-group-sm" style="min-width: 200px; max-width: 230px;">
+                  <input type="text" name="search" class="form-control pull-right" autofocus="autofocus" autocomplete="off" {%if request.GET.search%}value="{{ request.GET.search }}"{%endif%} placeholder="查询{{meta.verbose_name}}">
+                  <div class="input-group-btn">
+                    <button type="button" class="btn btn-default"><i class="fa fa-search"></i></button>
+                  </div>
+                </div>
+              </div>
+              {% endblock search %}
+            </div>
+            {% endblock box-header%}
+
             <div class="box-body table-responsive">
                 <table id="objects-list" class="table table-bordered table-hover table-condensed text-nowrap">
                   <thead>
