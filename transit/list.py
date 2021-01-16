@@ -9,7 +9,7 @@ from django.views.generic import TemplateView, ListView
 from django.contrib.admin.utils import label_for_field
 from django.utils.html import format_html
 
-from transit.lib.utils import fields_for_model, make_tbody_tr, nature_field_name
+from transit.lib.utils import fields_for_model, make_tbody_tr, nature_field_name, can_create
 from transit.mixins import BaseRequiredMixin, get_user_config
 from django.core.cache import cache, utils
 from django.utils.http import urlencode
@@ -301,6 +301,7 @@ class ListModelView(BaseRequiredMixin, ListView):
         objects = context.get('object_list')
 
         _extra = {
+            'can_create': can_create(self.opts, self.request.user),
             'thead': self.make_thead(),
             'tbody': self.make_tbody(objects),
             'paginate': self.make_paginate(self.object_list.count())
