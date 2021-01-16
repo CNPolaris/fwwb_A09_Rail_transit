@@ -4,13 +4,14 @@
 # @Author  : CNPolaris
 
 # 引入path
-from django.conf.urls import url, include, static
-from django.urls import path
+from django.conf.urls import url, include
 # 正在部署的应用的名称
 from transit import views
 from .echarts import echarts_monthflow, echarts_agestruct, echarts_dailyflow, echarts_singlesta, echarts_eachSta
 from .imports import load_dataoftrip, load_dataofstation, load_dataofuser, load_dataofworkday
 from .list import ListModelView
+from transit.edit import NewModelView
+
 app_name = 'transit'
 accounts_urls = [
     url(r'^login/$', views.login, name='login'),
@@ -32,6 +33,8 @@ urlpatterns = [
     url(r'^accounts/', include(accounts_urls)),
 
     url(r'^(?:list/(?P<model>\w+))/$', ListModelView.as_view(), name='list'),
+    url(r'^(?:new/(?P<model>\w+))/$', NewModelView.as_view(), name='new'),
+
     # 向echarts提供数据的api
     # 单月客流
     url(r'^echarts/data/monthflow', echarts_monthflow, name='monthflow'),
