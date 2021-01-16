@@ -22,6 +22,20 @@ class Users(models.Model):
     class Meta:
         default_permissions = ('view', 'add', 'change', 'delete', 'exports')
 
+    @cached_property
+    def get_absolute_url(self):
+        opts = self._meta
+        # if opts.proxy:
+        #    opts = opts.concrete_model._meta
+        url = reverse_lazy('transit:detail', args=[opts.model_name, self.pk])
+        return url
+
+    @cached_property
+    def get_edit_url(self):
+        opts = self._meta
+        url = reverse_lazy('transit:update', args=[opts.model_name, self.pk])
+        return url
+
 
 # 站点的model
 class Station(models.Model):
@@ -36,6 +50,20 @@ class Station(models.Model):
 
     class Meta:
         default_permissions = ('view', 'add', 'change', 'delete', 'exports')
+
+    @cached_property
+    def get_absolute_url(self):
+        opts = self._meta
+        # if opts.proxy:
+        #    opts = opts.concrete_model._meta
+        url = reverse_lazy('transit:detail', args=[opts.model_name, self.pk])
+        return url
+
+    @cached_property
+    def get_edit_url(self):
+        opts = self._meta
+        url = reverse_lazy('transit:update', args=[opts.model_name, self.pk])
+        return url
 
 
 # 乘车记录的model
@@ -84,6 +112,20 @@ class TripStatistics(models.Model):
         ordering = ["-date"]
         default_permissions = ('view', 'add', 'change', 'delete', 'exports')
 
+    @cached_property
+    def get_absolute_url(self):
+        opts = self._meta
+        # if opts.proxy:
+        #    opts = opts.concrete_model._meta
+        url = reverse_lazy('transit:detail', args=[opts.model_name, self.pk])
+        return url
+
+    @cached_property
+    def get_edit_url(self):
+        opts = self._meta
+        url = reverse_lazy('transit:update', args=[opts.model_name, self.pk])
+        return url
+
 
 # 节日的model
 class Workdays(models.Model):
@@ -97,8 +139,22 @@ class Workdays(models.Model):
         ordering = ['-date']
         default_permissions = ('view', 'add', 'change', 'delete', 'exports')
 
+    @cached_property
+    def get_absolute_url(self):
+        opts = self._meta
+        # if opts.proxy:
+        #    opts = opts.concrete_model._meta
+        url = reverse_lazy('transit:detail', args=[opts.model_name, self.pk])
+        return url
 
-# list model
+    @cached_property
+    def get_edit_url(self):
+        opts = self._meta
+        url = reverse_lazy('transit:update', args=[opts.model_name, self.pk])
+        return url
+
+
+# menu model
 class Menu(models.Model):
     model_name = models.CharField(max_length=50, verbose_name="模块名称")
     model_verbose = models.CharField(max_length=50, verbose_name="模块说明")
