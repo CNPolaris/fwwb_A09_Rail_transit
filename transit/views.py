@@ -10,7 +10,7 @@ from django.utils.functional import cached_property
 from django.core.cache import cache, utils
 from .models import Trips, Users, Workdays, Station, TripStatistics, Menu
 # 导入表单类
-from .forms import TripsForm
+from .forms import TripsNewForm
 # 引入redirect重定向模块
 from django.shortcuts import render, redirect
 import datetime
