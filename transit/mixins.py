@@ -14,6 +14,7 @@ from django.contrib.auth.views import redirect_to_login
 from django.utils.encoding import force_text
 from django.urls import reverse_lazy
 
+from transit.lib.utils import get_query_string
 from transit.models import Menu
 
 system_menus_key = utils.make_template_fragment_key('system.menus')
@@ -45,7 +46,7 @@ def get_user_config(user, mark, model):
     #     except BaseException:
     #         return None
     # else:
-        return None
+    return None
 
 
 class BaseRequiredMixin(LoginRequiredMixin):
@@ -85,3 +86,21 @@ class BaseRequiredMixin(LoginRequiredMixin):
         context['menus'] = construct_menus()
 
         return context
+
+
+class PostRedirect(object):
+    def get_success_url(self):
+        if '_addanother' in self.request.POST:
+            url = reverse_lazy('transit:new', kwargs={'model': self.model_name})
+            params = get_query_string(self.request.GET.copy())
+            success_url = force_text(url + params)
+        elif '_saverview' in self.request.POST:
+            kwargs = {'model': self.model_name, 'pk': self.object.pk}
+            success_url = reverse_lazy('transit:detail', kwargs=kwargs)
+        elif '_last' in self.request.POST:
+            referrer = self.request.META.get('HTTP_REFERER', None)
+            success_url = referrer
+        else:
+            kwargs = {'model': self.model_name}
+            success_url = reverse_lazy('transit:list', kwargs=kwargs)
+        return success_url
