@@ -2,7 +2,11 @@
 # @Time    : 2021/1/12 20:02
 # @FileName: list.py
 # @Author  : CNPolaris
+import operator
+from functools import reduce
+
 from django.contrib import messages
+from django.db import models
 from django.utils.functional import cached_property
 from django.utils.safestring import mark_safe
 from django.views.generic import TemplateView, ListView
@@ -137,13 +141,87 @@ class ListModelView(BaseRequiredMixin, ListView):
             ordering.append('-pk')
         return ordering
 
+    def get_filter_by(self):
+        effective = {'deleted': False}
+        _fields = dict((f.name, f.attname) for f in self.model._meta.fields)
+        for item in _fields:
+            if item in self.request.GET:
+                effective[_fields[item]] = self.request.GET[item]
+                if effective[_fields[item]] == 'all':
+                    del effective[_fields[item]]
+        return effective
+
+    def apply_optimize_queryset(self, queryset):
+        list_fields = self.get_list_fields
+        _select = [f.name for f in self.opts.fields if (
+                isinstance(f, models.ForeignKey) and f.name in list_fields)]
+        _prefetch = [f.name for f in self.opts.many_to_many
+                     if f.name in list_fields]
+        _all = queryset.select_related(*_select).prefetch_related(*_prefetch)
+        return _all
+
+    def get_search_by(self):
+        """
+        根据字段进行查询
+        :return:
+        """
+        search_by = self.request.GET.get(_QUERY, None)
+        return search_by.split(',') if search_by else None
+
+    @property
+    def allow_search_fields(self, exclude=None, include=None):
+        opts = self.opts
+
+        def construct_search(model):
+            exclude = [f.name for f in opts.fields if getattr(f, 'choices')]
+            fields = model._meta.fields
+            _fields = []
+            for f in fields:
+                if isinstance(f, models.CharField) and f.name not in exclude:
+                    _fields.append(f.name + '__icontains')
+            return _fields
+
+        exclude.extend([f.name for f in opts.fields if getattr(f, 'choices')])
+
+        fields = construct_search(self.model)
+        for f in opts.fields:
+            if exclude and f.name in exclude:
+                continue
+            if isinstance(f, models.ForeignKey):
+                submodel = f.related_model
+                for sub in submodel._meta.fields:
+                    if exclude and sub.name in exclude:
+                        continue
+                    if isinstance(
+                            sub, models.CharField) and not getattr(
+                        sub, 'choices'):
+                        fields.append(f.name + '__' + sub.name + '__icontains')
+            if isinstance(f, (models.CharField, models.TextField)):
+                fields.append(f.name + '__icontains')
+        return fields
+
     def get_queryset(self):
         """
         根据路由模型查询数据库
         :return: QuerySet
         """
-        # queryset = super(ListModelView, self).get_queryset()
-        queryset = self.model.objects.all()
+        # TODO:优化数据查询，包括按索引搜索
+        queryset = super(ListModelView, self).get_queryset()
+        search = self.get_search_by()
+        effective = self.get_filter_by()
+        ordering = self.get_ordering()
+        # if search and 'actived' in effective.keys():
+        #     del effective['actived']
+        _all = self.apply_optimize_queryset(queryset)  # .filter(**effective)
+        queryset = _all.order_by(*ordering)
+        if search:
+            lst = []
+            for q in search:
+                q = q.strip()
+                str = [models.Q(**{k: q}) for k in self.allow_search_fields]
+                lst.extend(str)
+            query_str = reduce(operator.or_, lst)
+            queryset = _all.filter(query_str).order_by(*ordering)
         return queryset
 
     def make_thead(self):
