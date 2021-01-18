@@ -85,6 +85,7 @@ class Trips(models.Model):
 
     class Meta:
         default_permissions = ('view', 'add', 'change', 'delete', 'exports')
+        ordering = ['-in_station_time']
 
     @cached_property
     def get_absolute_url(self):
