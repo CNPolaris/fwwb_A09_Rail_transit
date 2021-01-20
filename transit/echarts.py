@@ -173,10 +173,10 @@ def get_station_date(request, station, year, month, day):
     """
     if request.method == 'GET':
         context = {
-                'hour_list': [],
-                'in_list': [],
-                'out_list': []
-            }
+            'hour_list': [],
+            'in_list': [],
+            'out_list': []
+        }
         # 使用Q语句通过或条件筛选出进站或出站是所查询station的集合
         Sta_in_list = Trips.objects.filter(in_station=station,
                                            in_station_time__contains='{}-{}-{}'.format(year, month, day)).values(
@@ -221,7 +221,9 @@ def get_station_now(request, **kwargs):
         # 在Station中查询所有的station_name
         Station_query_set = Station.objects.values('station_name')
         # 在Trips中查询所有的in_station_time和out_station_time
-        In_out_station = Trips.objects.filter(in_station_time__contains='{}-{}-{}'.format(kwargs['year'], kwargs['month'], kwargs['day'])).values('in_station', 'out_station')
+        In_out_station = Trips.objects.filter(
+            in_station_time__contains='{}-{}-{}'.format(kwargs['year'], kwargs['month'], kwargs['day'])).values(
+            'in_station', 'out_station')
         if Station_query_set and In_out_station:
             # 存储当前系统中的所有站点
             station_list = []
@@ -258,3 +260,58 @@ def get_station_now(request, **kwargs):
             return JsonResponse(context)
         else:
             return JsonResponse(context)
+
+
+@csrf_exempt
+def get_peak_station(request, **kwargs):
+    """
+    早晚客流高峰期各站点的客流压力分析
+    :param request: GET
+    :return: json
+    目标图表样式：https://echarts.apache.org/examples/zh/editor.html?c=multiple-y-axis
+    """
+    # TODO: 对station进行排序 使站点列表有序
+    if request.method == "GET":
+        # 默认返回空数据
+        context = {
+            "station": [],
+            "in_pressure": [],
+            "out_pressure": []
+        }
+        if 7 <= int(kwargs['hour']) <= 9:
+            # 时间区间
+            Time_interval = ['{}-{}-{} {}'.format(kwargs['year'], kwargs['month'], kwargs['day'], '07:00'), '{}-{}-{} {}'.format(kwargs['year'], kwargs['month'], kwargs['day'], '09:00')]
+        elif 15 <= int(kwargs['hour']) <= 17:
+            Time_interval = ['{}-{}-{} {}'.format(kwargs['year'], kwargs['month'], kwargs['day'], '15:00'), '{}-{}-{} {}'.format(kwargs['year'], kwargs['month'], kwargs['day'], "17:00")]
+        else:
+            Time_interval = ['{}-{}-{}'.format(kwargs['year'], kwargs['month'], kwargs['day']), '{}-{}-{}'.format(kwargs['year'], kwargs['month'], kwargs['day'])]
+        # 站点表
+        Station_query_set = Station.objects.values('station_name')
+        # 高峰期进站的客流
+        Trips_in_set = Trips.objects.filter(in_station_time__range=(Time_interval[0], Time_interval[1])).values(
+            "in_station")
+        # 高峰期出站的客流
+        Trips_out_set = Trips.objects.filter(out_station_time__range=(Time_interval[0], Time_interval[1])).values("out_station")
+        if Station_query_set:
+            station_pressure_dict = dict(
+                zip([i['station_name'] for i in Station_query_set], [0] * len(Station_query_set)))
+            in_pressure_list = []
+            out_pressure_list = []
+            if Trips_in_set:
+                in_peak_dict = pd.value_counts([i['in_station'] for i in Trips_in_set]).to_dict()
+                for station in in_peak_dict:
+                    station_pressure_dict[station] = in_peak_dict[station]
+                in_pressure_list = list(station_pressure_dict.values())
+            if Trips_out_set:
+                station_pressure_dict = dict(
+                    zip([i['station_name'] for i in Station_query_set], [0] * len(Station_query_set)))
+                out_peak_dict = pd.value_counts([i['out_station'] for i in Trips_out_set]).to_dict()
+                for station in out_peak_dict:
+                    station_pressure_dict[station] = out_peak_dict[station]
+                out_pressure_list = list(station_pressure_dict.values())
+            context = {
+                "station": [i['station_name'] for i in Station_query_set],
+                "in_pressure": in_pressure_list,
+                "out_pressure": out_pressure_list
+            }
+        return JsonResponse(context)

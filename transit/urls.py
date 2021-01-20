@@ -7,7 +7,7 @@
 from django.conf.urls import url, include
 # 正在部署的应用的名称
 from transit import views
-from .echarts import get_month_flow, get_passengerAge_struct, get_daily_year, get_station_date, get_station_now, get_oneday_flow
+from .echarts import (get_month_flow, get_passengerAge_struct, get_daily_year, get_station_date, get_station_now, get_oneday_flow, get_peak_station)
 from .imports import load_dataoftrip, load_dataofstation, load_dataofuser, load_dataofworkday
 from .list import ListModelView
 from transit.edit import NewModelView
@@ -36,9 +36,11 @@ echarts_api_urls = [
     # 每日客流量
     url('^echarts/data/dailyflow.json/(?P<year>[0-9]{4})/$', get_daily_year, name='dailyflow'),
     # 单站的点出/入站客流分析
-    url('echarts/data/singlesta/(?P<station>)/(?P<year>[0-9]{4})/(?P<month>[0-9]{2})/(?P<day>[0-9]{2})/$', get_station_date, name='singlestaion'),
+    url('^echarts/data/singlesta/(?P<station>)/(?P<year>[0-9]{4})/(?P<month>[0-9]{2})/(?P<day>[0-9]{2})/$', get_station_date, name='singlestaion'),
     # 每天所有站点的进出入站点的次数
     url('^echarts/data/eachSta/(?P<year>[0-9]{4})/(?P<month>[0-9]{2})/(?P<day>[0-9]{2})/$', get_station_now, name='eachSta'),
+    # 高峰期站点客流压力
+    url('^echarts/data/peak/(?P<year>[0-9]{4})/(?P<month>[0-9]{2})/(?P<day>[0-9]{2})/(?P<hour>[0-9]{2})/$', get_peak_station, name="get_peak_station"),
 ]
 urlpatterns = [
     # 首页路由

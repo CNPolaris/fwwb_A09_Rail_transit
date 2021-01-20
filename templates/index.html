@@ -35,6 +35,9 @@
             <div class="col-md-5 col-xs-12">
                 <div id="age_struct"style="min-height: 320px;height: 400px"></div>
             </div>
+            <div class="col-md-12 col-xs-12">
+                <div id="peak"style="min-width:320px;height: 400px"></div>
+            </div>
 
         </div>
     </div>
@@ -45,11 +48,11 @@
     <script type="text/javascript">
         var myChart =echarts.init(document.getElementById('eachSta'));
         var date = new Date();
-        var year = date.getFullYear();
-        var month = date.getMonth()+1;
-        var day = date.getDate();
+        var year = date.getFullYear()-1;
+        var month = (date.getMonth()+1).toString().padStart(2,'0');
+        var day = date.getDate().toString().padStart(2,'0');
         $.ajax({
-            url:"echarts/data/eachSta/"+year+"-"+month+"-"+day,
+            url:"/api/echarts/data/eachSta/2020/01/01",
             type:"get",
             dataType:"json",
             success:function (data){
@@ -101,7 +104,7 @@
    <script type="text/javascript">
         var echart_age_struct = echarts.init(document.getElementById('age_struct'));
         $.ajax({
-           url:"echarts/data/agestruct.json",
+           url:"/api/echarts/data/agestruct",
             type:"get",
             dataType: "json",
             success:function (data) {
@@ -142,4 +145,78 @@
             }
         });
    </script>
+    <script type="text/javascript">
+        var mychart = echarts.init(document.getElementById("peak"));
+        var date = new Date();
+        var year = date.getFullYear()-1;
+        var month = (date.getMonth()+1).toString().padStart(2,'0');
+        var day = date.getDate().toString().padStart(2,'0');
+        var hour = date.getHours().toString().padStart(2,'0');
+        $.ajax({
+            url: "/api/echarts/data/peak/"+year+"/"+month+"/"+day+"/"+hour,
+            type: "GET",
+            dataType: "json",
+            success: function (data){
+                mychart.setOption(
+                    option = {
+                        tooltip: {
+                            trigger: 'axis',
+                            axisPointer: {
+                                type: 'cross',
+                                crossStyle: {
+                                    color: '#999'
+                                }
+                            }
+                        },
+                        legend: {
+                            data: ['进站情况', '出站情况']
+                        },
+                        xAxis: [
+                            {
+                                type: 'category',
+                                data: data.station,
+                                axisPointer: {
+                                    type: 'shadow'
+                                }
+                            }
+                        ],
+                        yAxis: [
+                            {
+                                type: 'value',
+                                name: '进站情况',
+                                min: 0,
+                                max: 250,
+                                interval: 50,
+                                axisLabel: {
+                                    formatter: '{value} 人'
+                                }
+                            },
+                            {
+                                type: 'value',
+                                name: '出站情况',
+                                min: 0,
+                                max: 25,
+                                interval: 5,
+                                axisLabel: {
+                                    formatter: '{value} 人'
+                                }
+                            }
+                        ],
+                        series: [
+                            {
+                                name: '进站情况',
+                                type: 'bar',
+                                data: data.in_pressure
+                            },
+                            {
+                                name: '出站情况',
+                                type: 'bar',
+                                data: data.out_pressure
+                            }
+                        ]
+                    }
+                );
+            }
+        });
+    </script>
 {% endblock extra-js %}
