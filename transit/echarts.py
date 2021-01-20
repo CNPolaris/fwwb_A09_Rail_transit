@@ -280,11 +280,13 @@ def get_peak_station(request, **kwargs):
         }
         if 7 <= int(kwargs['hour']) <= 9:
             # 时间区间
-            Time_interval = ['{}-{}-{} {}'.format(kwargs['year'], kwargs['month'], kwargs['day'], '07:00'), '{}-{}-{} {}'.format(kwargs['year'], kwargs['month'], kwargs['day'], '09:00')]
-        elif 15 <= int(kwargs['hour']) <= 17:
-            Time_interval = ['{}-{}-{} {}'.format(kwargs['year'], kwargs['month'], kwargs['day'], '15:00'), '{}-{}-{} {}'.format(kwargs['year'], kwargs['month'], kwargs['day'], "17:00")]
+            Time_interval = ['{}-{}-{} {}'.format(kwargs['year'], kwargs['month'], kwargs['day'], '07:00'), '{}-{}-{} '
+                                                                                                            '{}'.format(kwargs['year'], kwargs['month'], kwargs['day'], '09:00')]
+        elif 17 <= int(kwargs['hour']) <= 19:
+            Time_interval = ['{}-{}-{} {}'.format(kwargs['year'], kwargs['month'], kwargs['day'], '15:00'), '{}-{}-{} '
+                                                                                                            '{}'.format(kwargs['year'], kwargs['month'], kwargs['day'], "17:00")]
         else:
-            Time_interval = ['{}-{}-{}'.format(kwargs['year'], kwargs['month'], kwargs['day']), '{}-{}-{}'.format(kwargs['year'], kwargs['month'], kwargs['day'])]
+            Time_interval = ['{}-{}-{} 00:00'.format(kwargs['year'], kwargs['month'], kwargs['day']), '{}-{}-{} 23:59'.format(kwargs['year'], kwargs['month'], kwargs['day'])]
         # 站点表
         Station_query_set = Station.objects.values('station_name')
         # 高峰期进站的客流
@@ -293,8 +295,10 @@ def get_peak_station(request, **kwargs):
         # 高峰期出站的客流
         Trips_out_set = Trips.objects.filter(out_station_time__range=(Time_interval[0], Time_interval[1])).values("out_station")
         if Station_query_set:
+            # 站点和站点压力dict
             station_pressure_dict = dict(
                 zip([i['station_name'] for i in Station_query_set], [0] * len(Station_query_set)))
+            # 进出站点的压力列表
             in_pressure_list = []
             out_pressure_list = []
             if Trips_in_set:
