@@ -281,19 +281,23 @@ def get_peak_station(request, **kwargs):
         if 7 <= int(kwargs['hour']) <= 9:
             # 时间区间
             Time_interval = ['{}-{}-{} {}'.format(kwargs['year'], kwargs['month'], kwargs['day'], '07:00'), '{}-{}-{} '
-                                                                                                            '{}'.format(kwargs['year'], kwargs['month'], kwargs['day'], '09:00')]
+                                                                                                            '{}'.format(
+                kwargs['year'], kwargs['month'], kwargs['day'], '09:00')]
         elif 17 <= int(kwargs['hour']) <= 19:
             Time_interval = ['{}-{}-{} {}'.format(kwargs['year'], kwargs['month'], kwargs['day'], '15:00'), '{}-{}-{} '
-                                                                                                            '{}'.format(kwargs['year'], kwargs['month'], kwargs['day'], "17:00")]
+                                                                                                            '{}'.format(
+                kwargs['year'], kwargs['month'], kwargs['day'], "17:00")]
         else:
-            Time_interval = ['{}-{}-{} 00:00'.format(kwargs['year'], kwargs['month'], kwargs['day']), '{}-{}-{} 23:59'.format(kwargs['year'], kwargs['month'], kwargs['day'])]
+            Time_interval = ['{}-{}-{} 00:00'.format(kwargs['year'], kwargs['month'], kwargs['day']),
+                             '{}-{}-{} 23:59'.format(kwargs['year'], kwargs['month'], kwargs['day'])]
         # 站点表
         Station_query_set = Station.objects.values('station_name')
         # 高峰期进站的客流
         Trips_in_set = Trips.objects.filter(in_station_time__range=(Time_interval[0], Time_interval[1])).values(
             "in_station")
         # 高峰期出站的客流
-        Trips_out_set = Trips.objects.filter(out_station_time__range=(Time_interval[0], Time_interval[1])).values("out_station")
+        Trips_out_set = Trips.objects.filter(out_station_time__range=(Time_interval[0], Time_interval[1])).values(
+            "out_station")
         if Station_query_set:
             # 站点和站点压力dict
             station_pressure_dict = dict(
@@ -318,4 +322,40 @@ def get_peak_station(request, **kwargs):
                 "in_pressure": in_pressure_list,
                 "out_pressure": out_pressure_list
             }
+        return JsonResponse(context)
+
+
+@csrf_exempt
+def get_OD_station(request, **kwargs):
+    """
+    获取站点的OD客流
+    :param request:
+    :param kwargs:
+    :return:
+    """
+    if request.method == "GET":
+        context = {
+            "station_name": [],
+            "station_route": [],
+        }
+        Station_query_set = Station.objects.all().values("station_name", "station_route")
+        if Station_query_set:
+            station_name_list = [i["station_name"] for i in Station_query_set]
+            station_route_list = [i["station_route"] for i in Station_query_set]
+            context["station_name"] = station_name_list
+            context["station_route"] = station_route_list
+            name_route_dict = dict(zip(station_name_list, station_route_list))
+            context["name_route_dict"] = name_route_dict
+            Trips_query_set = Trips.objects.filter(in_station_time__contains='2020-01-01').values("in_station",
+                                                                                                  "out_station")
+            if Trips_query_set:
+                od = []
+                for i in Trips_query_set:
+                    od.append([i["in_station"], i["out_station"]])
+                od_dict = pd.value_counts(od)
+                context["od"] = [{"begin": i[0][0], "end": i[0][1],
+                                  "route": [name_route_dict[i[0][0]], name_route_dict[i[0][1]]],
+                                  "value": i[1]
+                                  } for i in od_dict.items() if
+                                 i[0][0] in name_route_dict.keys() and i[0][1] in name_route_dict.keys()]
         return JsonResponse(context)
