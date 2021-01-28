@@ -4,7 +4,7 @@
 # @Author  : CNPolaris
 import calendar
 
-from .models import Trips, Users, Workdays, Station, TripStatistics
+from transit.models import Trips, Users, Workdays, Station, TripStatistics
 from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Count
 from django.http import JsonResponse
