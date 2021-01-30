@@ -3,10 +3,12 @@
 # @FileName: urls.py
 # @Author  : CNPolaris
 from django.conf.urls import url, include
-from transit.apis.echarts import (get_month_flow, get_passengerAge_struct, get_daily_year, get_station_date, get_station_now,
+from transit.apis.echarts import (get_month_flow, get_passengerAge_struct, get_daily_year, get_station_date,
+                                  get_station_now,
                                   get_oneday_flow, get_peak_station, get_OD_station)
 
 from transit.apis import tableView
+from transit.apis import trips
 
 table_api_urls = [
     url(r'^model/(?P<model>\w+)/$', tableView.AllSetByModel.as_view({"get": "list"})),
@@ -32,4 +34,8 @@ echarts_api_urls = [
         get_peak_station, name="get_peak_station"),
     # 站点的OD客流分析
     url('^echarts/data/getOD', get_OD_station, name="get_OD_station"),
+]
+
+manager_urls = [
+    url(r'manager/trips', trips.dispatcher)
 ]
