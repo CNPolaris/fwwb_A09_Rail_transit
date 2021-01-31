@@ -16,83 +16,128 @@ import pandas as pd
 """
 
 
-@csrf_exempt
-def get_month_flow(request, year, month):
+def monthly_flow(request):
     """
-    单月整体客流情况分析
-    :param date: 前端使用api时需要带上date数据 如2020-01-01
-    :param request:
+    根据具体的date来获取当月的整体客流波动情况
+    :param request: GET /api/echarts/month?action=list_month&date=2020-01 HTTP/1.1
     :return: json
-    key: 某年月的所有日期
-    value: 对应日期的出行总量
+    """
+    context = {'ret': 0}
+    date = request.params['date']
+    querySet = TripStatistics.objects.filter(date__contains=date).order_by('date').values(
+        'date',
+        'count')
+    if querySet:
+        context['data'] = list(querySet)
+    else:
+        context['ret'] = 1
+        context['msg'] = "{}客流量为空".format(date)
+    return JsonResponse(context)
+
+
+def all_month_flow(request):
+    """
+    返回当前年的所有月份的客流量
+    :param request: GET /api/echarts/month?action=list_month HTTP/1.1
+    :return:
+    """
+    context = {'ret': 0}
+    year = request.params.get('year', None)
+    if year is None:
+        year = datetime.date.today().year - 1
+    querySet = TripStatistics.objects.filter(date__contains=year)
+    if querySet:
+        month = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
+        data = []
+        for m in month:
+            tempSet = querySet.filter(date__contains="{}-{}".format(year, m)).values('count')
+            total = 0
+            for t in tempSet:
+                total = total + t['count']
+            data.append({'date': "{}-{}".format(year, m), 'count': total})
+        context['data'] = data
+    else:
+        context['ret'] = 1
+        context['msg'] = "{}年月度客流量数据不存在".format(year)
+    return JsonResponse(context)
+
+
+@csrf_exempt
+def get_month_flow(request):
+    """
+    单月整体客流情况分析业务转发器
+    :param request:GET /api/echarts/month?action=list_month&date=2020-01 HTTP/1.1
+    :return: json
     """
     if request.method == 'GET':
-        TripStatistics_query_set = TripStatistics.objects.filter(date__contains='{}-{}'.format(year, month)).values(
-            'date',
-            'count')
-        if TripStatistics_query_set:
-            # 该月有多少天
-            month_days = calendar.monthrange((int(year)), int(month))[1]
-            # 生成日期序列
-            date_range = pd.date_range(start='{}/{}/{}'.format(year, month, '01'), periods=month_days)
-            date_list = []
-            for date in date_range:
-                date_list.append(date.strftime("%Y-%m-%d"))
-            # 该月的每日出行人数
-            month_flow_dict = dict(zip(date_list, [0] * month_days))
-            for i in TripStatistics_query_set:
-                month_flow_dict[i['date'].strftime("%Y-%m-%d")] = i['count']
-            context = {
-                "key": list(month_flow_dict.keys()),
-                "value": list(month_flow_dict.values())
-            }
-            return JsonResponse(context)
+        request.params = request.GET
+        action = request.params.get('action', None)
+        date = request.params.get('date', None)
+        year = request.params.get('date', None)
+        if action and date:
+            return monthly_flow(request)
+        elif year or (action and date is None):
+            return all_month_flow(request)
         else:
-            return JsonResponse({
-                "key": [],
-                "value": []
-            })
+            return JsonResponse({'ret': 1, 'msg': "不支持该类型的http请求"})
     else:
-        return JsonResponse({
-            "key": [],
-            "value": []
-        })
+        return JsonResponse({'ret': 1, 'msg': "不支持该类型的http请求"})
+
+
+def daily_flow(request):
+    """
+    返回具体date的客流量
+    :param request: request.params.get('date')
+    :return: json
+    """
+    date = request.params['date']
+    context = {'ret': 0}
+    querySet = TripStatistics.objects.filter(date=date).values('date', 'count')
+    if querySet:
+        context['data'] = list(querySet)
+    else:
+        context['ret'] = 1
+        context['msg'] = "{}的客流量为空".format(date)
+    return JsonResponse(context)
+
+
+def list_daily(request):
+    """
+    列出所有日期的当日客流量
+    :param request: GET
+    :return: json
+    """
+    context = {'ret': 0}
+    querySet = TripStatistics.objects.values()
+    if querySet:
+        context['data'] = list(querySet)
+    else:
+        context['ret'] = 1
+        context['msg'] = "获取数据失败"
+    return JsonResponse(context)
 
 
 @csrf_exempt
-def get_oneday_flow(request, year, month, day):
+def get_daily_flow(request):
     """
-    查询某一天的出行量
+    查询某一天的出行量业务分发器
     :param request: GET
-    :param year: str
-    :param month: str
-    :param day: str
     :return: json
-    e.g 2020/01/01
     """
     if request.method == "GET":
-        TripStatistics_query_set = TripStatistics.objects.filter(
-            date='{}-{}-{}'.format(year, month, day)).values('date', 'count')
-        if TripStatistics_query_set:
-            context = {
-                "key": [i['date'] for i in TripStatistics_query_set],
-                "value": [i['count'] for i in TripStatistics_query_set]
-            }
-            return JsonResponse(context)
+        request.params = request.GET
+        action = request.params.get('action', None)
+        date = request.params.get('date', None)
+        if action and date:
+            return daily_flow(request)
+        elif action and date is None:
+            return list_daily(request)
         else:
-            return JsonResponse({
-                "key": [],
-                "value": []
-            })
-    else:
-        return JsonResponse({
-            "key": [],
-            "value": []
-        })
+            return JsonResponse({'ret': 1, 'msg': "不支持该类型的http访问"})
 
 
 @csrf_exempt
-def get_passengerAge_struct(request):
+def get_age_struct(request):
     """
     用户年龄结构分析
     :param request:Get
@@ -100,35 +145,45 @@ def get_passengerAge_struct(request):
     age: 用户年龄的分组
     count: 不同年龄段的用户数量
     """
-    User_list = Users.objects.values_list('birth').annotate(Count("user_id"))
-    # 记录不同年龄段的个数
-    count = [0, 0, 0, 0, 0]
-    stage = ["0-6", "7-17", "18-40", "41-65", "66+"]
-    # 获取互联网时间的年份
-    This_year = datetime.date.today().year
-    if User_list:
-        for line in User_list:
-            # 当前的日期减去用户的出生年
-            age = This_year - line[0]
-            if 0 <= age < 7:
-                count[0] = count[0] + line[1]
-            elif 7 <= age < 18:
-                count[1] = count[1] + line[1]
-            elif 18 <= age < 41:
-                count[2] = count[2] + line[1]
-            elif 41 <= age < 66:
-                count[3] = count[3] + line[1]
-            elif 66 <= age:
-                count[4] = count[4] + line[1]
-    data = []
-    for s, c in zip(stage, count):
-        data.append({'name': s, 'value': c})
-    # 向前端返回的数据
-    context = {
-        "data": data,
-        "name": stage
-    }
-    return JsonResponse(context)
+    if request.method == 'GET':
+        request.params = request.GET
+        action = request.params.get('action', None)
+        if action is not None and action == 'age_struct':
+            context = {'ret': 0}
+            User_list = Users.objects.values_list('birth').annotate(Count("user_id"))
+            # 记录不同年龄段的个数
+            count = [0, 0, 0, 0, 0]
+            stage = ["0-6", "7-17", "18-40", "41-65", "66+"]
+            # 获取互联网时间的年份
+            This_year = datetime.date.today().year
+            if User_list:
+                for line in User_list:
+                    # 当前的日期减去用户的出生年
+                    age = This_year - line[0]
+                    if 0 <= age < 7:
+                        count[0] = count[0] + line[1]
+                    elif 7 <= age < 18:
+                        count[1] = count[1] + line[1]
+                    elif 18 <= age < 41:
+                        count[2] = count[2] + line[1]
+                    elif 41 <= age < 66:
+                        count[3] = count[3] + line[1]
+                    elif 66 <= age:
+                        count[4] = count[4] + line[1]
+            else:
+                context['ret'] = 1
+                context['msg'] = "年龄组成结构查询结果为空"
+                return JsonResponse(context)
+            data = []
+            for s, c in zip(stage, count):
+                data.append({'name': s, 'value': c})
+            # 向前端返回的数据
+            context['data'] = data
+            context['name'] = stage
+            return JsonResponse(context)
+        return JsonResponse({'ret': 1, 'msg': '不支持该类型http请求'})
+    else:
+        return JsonResponse({'ret': 1, 'msg': '不支持该类型http请求'})
 
 
 @csrf_exempt
