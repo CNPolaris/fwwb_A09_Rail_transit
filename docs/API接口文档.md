@@ -1,4 +1,4 @@
-## API接口文档 V1.0.1
+## API接口文档 V1.1.1
 
 ### 登陆系统
 
@@ -1017,6 +1017,190 @@ http响应消息body中，数据以json格式存储，
 `ret`不为0表示失败，`msg`字段描述添加失败的原因
 
 ### Echarts数据API
+
+#### 乘客的年龄组成结构
+
+###### 请求消息
+
+```http
+GET /api/echarts/agestruct?action=age_struct HTTP /1.1
+```
+
+###### 请求参数
+
+http的GET请求参数应当在url路由中
+
+- `action`字段固定填写age_struct表示列出所有的age和birth信息
+
+###### 响应消息
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+```
+
+###### 响应内容
+
+http响应消息中，数据以json格式存储
+
+如果获取数据成功，示例如下
+
+```http
+{
+    "ret": 0,
+    "data": [
+        {
+            "name": "0-6",
+            "value": 0
+        },
+        {
+            "name": "7-17",
+            "value": 535
+        },
+        {
+            "name": "18-40",
+            "value": 100799
+        },
+        {
+            "name": "41-65",
+            "value": 22983
+        },
+        {
+            "name": "66+",
+            "value": 465
+        }
+    ],
+    "name": [
+        "0-6",
+        "7-17",
+        "18-40",
+        "41-65",
+        "66+"
+    ]
+}
+```
+
+`ret`为0表示获取成功
+
+`data`字段为返回的数据
+
+- name 表示年龄区间
+- value 表示每个区间内的乘客数量
+
+`name`字段里是前后端约定的分组区间，用于echarts绘制图形
+
+如果请求数据失败，示例如下
+
+```json
+{
+    "ret":1,
+    "msg":"年龄组成结构查询结果为空"
+}
+```
+
+ret不为0表示请求数据失败
+
+#### 某天的出行量
+
+###### 请求消息
+
+```http
+GET /api/echarts/daily?action=list_daily HTTP/1.1
+```
+
+###### 请求参数
+
+http GET请求中，参数应当在url路由中
+
+- aciton=list_daily 固定填写list_daily 表示请求列出所有日期的出行量
+- date字段固定填写需要获取数据所在的时间,如date=2020-01-01，列出当日的出行量
+
+###### 响应消息
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+```
+
+###### 响应内容
+
+http响应消息体中，数据以json格式存储
+
+如果获取数据成功，示例如下
+
+```json
+{
+    "ret": 0,
+    "data": [
+        {
+            "date": "2020-07-16",
+            "count": 7477
+        },
+        {
+            "date": "2020-07-15",
+            "count": 7494
+        }
+}
+```
+
+如果获取失败，示例如下
+
+```json
+{
+    "ret": 1,
+    "msg": "不支持该类型的http访问"
+}
+```
+
+#### 单月整体客流量
+
+###### 请求消息
+
+```http
+GET /api/echarts/month?action=list_month HTTP/1.1
+```
+
+###### 请求参数
+
+- action固定填写list_month 表示列出当年所有月度的客流量
+- date字段用来确定具体月度的每日客流量
+
+###### 响应消息
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+```
+
+###### 响应内容
+
+http响应内容消息体中，数据以json格式存储
+
+如果获取数据成功，示例如下
+
+```json
+{
+    "ret": 0,
+    "data": [
+        {
+            "date": "2020-04-30",
+            "count": 6191
+        },
+        {
+            "date": "2020-04-29",
+            "count": 5473
+        }
+}
+```
+
+如果获取数据失败，示例如下
+
+```json
+{
+    "ret": 1,
+    "msg": "不支持该类型的http请求"
+}
+```
 
 
 
