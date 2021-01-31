@@ -8,7 +8,7 @@ from transit.apis.echarts import (get_month_flow, get_passengerAge_struct, get_d
                                   get_oneday_flow, get_peak_station, get_OD_station)
 
 from transit.apis import tableView
-from transit.apis import trips
+from transit.apis import trips, stations, workdays, users
 
 table_api_urls = [
     url(r'^model/(?P<model>\w+)/$', tableView.AllSetByModel.as_view({"get": "list"})),
@@ -37,5 +37,8 @@ echarts_api_urls = [
 ]
 
 manager_urls = [
-    url(r'manager/trips', trips.dispatcher)
+    url(r'manager/trips', trips.dispatcher),
+    url(r'manager/station', stations.dispatcher),
+    url(r'manager/workday', workdays.dispatcher),
+    url(r'manager/passenger', users.dispatcher)
 ]

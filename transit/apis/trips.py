@@ -6,7 +6,7 @@ from django.db.models import Q
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.utils import json
-from transit.models import Trips, Users
+from transit.models import Trips, Users, Station
 # 增加对分页的支持
 from django.core.paginator import Paginator, EmptyPage
 import datetime
@@ -138,16 +138,21 @@ def data_valid(data):
     :param data:
     :return: Bool
     """
-    fields = ['user_id', 'in_station', 'in_station_time', 'out_station', 'out_station_time', 'channel', "price"]
-    for key in fields:
-        try:
-            if data[key] is None:
-                return False
-            else:
-                return True
-        except BaseException as e:
-            print(e)
-            return False
+    fields = ['in_station_time', 'out_station', 'out_station_time', 'channel', "price"]
+    if 'user_id' not in data or data['user_id'] is None:
+        return False
+    if 'in_station' not in data or not Station.objects.get(station_name=data['in_station']):
+        return False
+    if 'in_station_time' not in data or data['in_station_time'] is None:
+        return False
+    if 'out_station' not in data or Station.objects.get(station_name=data['out_station']):
+        return False
+    if 'out_station_time' not in data or data['out_station_time'] is None:
+        return False
+    if 'channel' not in data or not isinstance(data['channel'], int):
+        return False
+    if 'price' not in data or not isinstance(data['peice'], int):
+        return False
     return True
 
 
@@ -204,9 +209,18 @@ def modify_trip(request):
         context['ret'] = 1
         context['msg'] = 'id为{}的记录不存在'.format(tid)
         return JsonResponse(context)
-    for key in _FIELDS:
-        if key in newdata:
-            trip[key] = newdata[key]
+    if 'in_station' not in newdata or not Station.objects.get(station_name=newdata['in_station']):
+        trip.in_station = newdata['in_station']
+    if 'in_station_time' not in newdata or newdata['in_station_time'] is None:
+        trip.in_station_time = datetime.datetime.strptime(newdata['in_station_time'], "%Y-%m-%d %H:%M:%S.%f")
+    if 'out_station' not in newdata or Station.objects.get(station_name=newdata['out_station']):
+        trip.out_station = newdata['out_station']
+    if 'out_station_time' not in newdata or newdata['out_station_time'] is None:
+        trip.out_station_time = datetime.datetime.strptime(newdata['out_station_time'], "%Y-%m-%d %H:%M:%S.%f")
+    if 'channel' not in newdata or not isinstance(newdata['channel'], int):
+        trip.channel = newdata['channel']
+    if 'price' not in newdata or not isinstance(newdata['peice'], int):
+        trip.price = newdata['price']
     trip.save()
     context['ret'] = 0
     return JsonResponse(context)
