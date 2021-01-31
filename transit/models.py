@@ -155,17 +155,6 @@ class Workdays(models.Model):
         return url
 
 
-# menu model
-class Menu(models.Model):
-    model_name = models.CharField(max_length=50, verbose_name="模块名称")
-    model_verbose = models.CharField(max_length=50, verbose_name="模块说明")
-    icon = models.CharField(max_length=20, verbose_name="图标")
-    icon_color = models.CharField(max_length=50, verbose_name="图标颜色")
-
-    class Meta:
-        default_permissions = ('view', 'add', 'change', 'delete', 'exports')
-
-
 @receiver(post_save, sender=Trips)
 def countAdd(instance, **kwargs):
     """

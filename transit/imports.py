@@ -2,6 +2,8 @@
 # @Time    : 2021/1/10 10:28
 # @FileName: imports.py
 # @Author  : CNPolaris
+from datetime import datetime
+
 from django.http import HttpResponse, JsonResponse
 from .models import Trips, Users, Workdays, Station, TripStatistics
 from django.views.decorators.csrf import csrf_exempt
