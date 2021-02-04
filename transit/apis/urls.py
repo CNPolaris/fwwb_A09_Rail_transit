@@ -21,8 +21,8 @@ echarts_api_urls = [
     # # 高峰期站点客流压力
     # url('^echarts/data/peak/(?P<year>[0-9]{4})/(?P<month>[0-9]{2})/(?P<day>[0-9]{2})/(?P<hour>[0-9]{2})/$',
     #     get_peak_station, name="get_peak_station"),
-    # # 站点的OD客流分析
-    # url('^echarts/data/getOD', get_OD_station, name="get_OD_station"),
+    # 站点的OD客流分析
+    url('^echarts/od', echarts.get_OD_station, name="get_OD_station"),
 ]
 
 manager_urls = [

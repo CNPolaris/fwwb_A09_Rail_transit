@@ -1,4 +1,4 @@
-## API接口文档 V1.1.1
+## API接口文档 V1.2.2
 
 ### 登陆系统
 
@@ -1201,6 +1201,74 @@ http响应内容消息体中，数据以json格式存储
     "msg": "不支持该类型的http请求"
 }
 ```
+
+#### 站点OD客流分析
+
+###### 请求消息
+
+```http
+GET /api/echarts/od?action=list_od HTTP/1.1
+```
+
+###### 请求参数
+
+- http请求消息body参数action固定填写list_od,表示默认列出所有站点的OD客流分析
+- http请求消息body中携带参数
+  - station 要检索的站点
+  - date 要检索的时间
+
+具体的消息格式为json，示例如下
+
+```json
+{
+    "action":"list_od",
+    "station":"Sta188",
+    "date":"2020-01-01 09:08:01"
+}
+```
+
+###### 响应消息
+
+```http
+HTTP/1.1 200 OK
+Content-Type:application/json
+```
+
+###### 响应内容
+
+http响应内容中，数据以json格式存储
+
+如果获取数据成功，示例如下
+
+```json
+{
+    "ret": 0,
+    "data": [
+        {
+            "in_station": "Sta65",
+            "out_station": "Sta104",
+            "count": 18
+        },
+        {
+            "in_station": "Sta110",
+            "out_station": "Sta63",
+            "count": 15
+        }        
+}
+```
+
+如果获取数据失败，示例如下
+
+```json
+{
+    "ret":1,
+    "msg":"获取数据失败"
+}
+```
+
+
+
+
 
 
 

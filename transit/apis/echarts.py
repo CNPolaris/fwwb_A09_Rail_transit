@@ -3,10 +3,11 @@
 # @FileName: echarts.py
 # @Author  : CNPolaris
 import calendar
+import json
 
 from transit.models import Trips, Users, Workdays, Station, TripStatistics
 from django.views.decorators.csrf import csrf_exempt
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.http import JsonResponse
 import datetime
 import pandas as pd
@@ -380,6 +381,30 @@ def get_peak_station(request, **kwargs):
         return JsonResponse(context)
 
 
+def list_od(request):
+    """
+    根据date列出所有站点的OD客流
+    :param request:GET
+    :return:json
+    """
+    context = {'ret': 0}
+    date = request.params['date']
+    station = request.params.get('station', None)
+    if station is not None:
+        Trips_querySet = Trips.objects.filter(Q(in_station=station) | Q(out_station=station),
+                                              Q(in_station_time__contains=date) | Q(out_station_time__contains=date)).values("in_station", "out_station")
+    else:
+        Trips_querySet = Trips.objects.filter(Q(in_station_time__contains=date) | Q(out_station_time__contains=date)).values("in_station", "out_station")
+    if Trips_querySet:
+        od = list(Trips_querySet)
+        od_dict = pd.value_counts(od)
+        context['data'] = [{"in_station": i[0]["in_station"], "out_station": i[0]["out_station"], "count": i[1]} for i in od_dict.items()]
+    else:
+        context['ret'] = 1
+        context['msg'] = "站点信息为空"
+    return JsonResponse(context)
+
+
 @csrf_exempt
 def get_OD_station(request, **kwargs):
     """
@@ -389,28 +414,38 @@ def get_OD_station(request, **kwargs):
     :return:
     """
     if request.method == "GET":
-        context = {
-            "station_name": [],
-            "station_route": [],
-        }
-        Station_query_set = Station.objects.all().values("station_name", "station_route")
-        if Station_query_set:
-            station_name_list = [i["station_name"] for i in Station_query_set]
-            station_route_list = [i["station_route"] for i in Station_query_set]
-            context["station_name"] = station_name_list
-            context["station_route"] = station_route_list
-            name_route_dict = dict(zip(station_name_list, station_route_list))
-            context["name_route_dict"] = name_route_dict
-            Trips_query_set = Trips.objects.filter(in_station_time__contains='2020-01-01').values("in_station",
-                                                                                                  "out_station")
-            if Trips_query_set:
-                od = []
-                for i in Trips_query_set:
-                    od.append([i["in_station"], i["out_station"]])
-                od_dict = pd.value_counts(od)
-                context["od"] = [{"begin": i[0][0], "end": i[0][1],
-                                  "route": [name_route_dict[i[0][0]], name_route_dict[i[0][1]]],
-                                  "value": i[1]
-                                  } for i in od_dict.items() if
-                                 i[0][0] in name_route_dict.keys() and i[0][1] in name_route_dict.keys()]
-        return JsonResponse(context)
+        request.params = json.loads(request.body)
+        action = request.params.get('action', None)
+        date = request.params.get('date', None)
+        if action == 'list_od' and date:
+            return list_od(request)
+        else:
+            return JsonResponse({'ret': 1, 'msg': "不支持该类型的http访问"})
+    else:
+        return JsonResponse({'ret': 1, 'msg': "不支持该类型的http访问"})
+
+        # context = {
+        #     "station_name": [],
+        #     "station_route": [],
+        # }
+        # Station_query_set = Station.objects.all().values("station_name", "station_route")
+        # if Station_query_set:
+        #     station_name_list = [i["station_name"] for i in Station_query_set]
+        #     station_route_list = [i["station_route"] for i in Station_query_set]
+        #     context["station_name"] = station_name_list
+        #     context["station_route"] = station_route_list
+        #     name_route_dict = dict(zip(station_name_list, station_route_list))
+        #     context["name_route_dict"] = name_route_dict
+        #     Trips_query_set = Trips.objects.filter(in_station_time__contains='2020-01-01').values("in_station",
+        #                                                                                           "out_station")
+        #     if Trips_query_set:
+        #         od = []
+        #         for i in Trips_query_set:
+        #             od.append([i["in_station"], i["out_station"]])
+        #         od_dict = pd.value_counts(od)
+        #         context["od"] = [{"begin": i[0][0], "end": i[0][1],
+        #                           "route": [name_route_dict[i[0][0]], name_route_dict[i[0][1]]],
+        #                           "value": i[1]
+        #                           } for i in od_dict.items() if
+        #                          i[0][0] in name_route_dict.keys() and i[0][1] in name_route_dict.keys()]
+        # return JsonResponse(context)
