@@ -188,35 +188,6 @@ def get_age_struct(request):
 
 
 @csrf_exempt
-def get_daily_year(request, year):
-    """
-    一年中每一天的出行量统计
-    :param year: web发送请求时所附带的当前年份参数
-    :param request: Get
-    :return: json
-    """
-    if request.method == "GET":
-        # 从Tripstatistics中获取每一天的实时出行人数
-        EachDay_list = TripStatistics.objects.filter(date__contains=year).order_by('date')
-        if EachDay_list:
-            each_day = []
-            each_day_flow = []
-            for line in EachDay_list:
-                each_day.append(line.date)
-                each_day_flow.append(line.count)
-            # api响应的数据
-            context = {
-                "date": each_day,
-                "date_flow": each_day_flow
-            }
-            return JsonResponse(context)
-        else:
-            return JsonResponse({"date": [], "date_flow": []})
-    else:
-        return JsonResponse({"date": [], "date_flow": []})
-
-
-@csrf_exempt
 def get_station_date(request, station, year, month, day):
     """
     该api提供查询具体到某站某天24时刻的出入客流
@@ -392,13 +363,16 @@ def list_od(request):
     station = request.params.get('station', None)
     if station is not None:
         Trips_querySet = Trips.objects.filter(Q(in_station=station) | Q(out_station=station),
-                                              Q(in_station_time__contains=date) | Q(out_station_time__contains=date)).values("in_station", "out_station")
+                                              Q(in_station_time__contains=date) | Q(
+                                                  out_station_time__contains=date)).values("in_station", "out_station")
     else:
-        Trips_querySet = Trips.objects.filter(Q(in_station_time__contains=date) | Q(out_station_time__contains=date)).values("in_station", "out_station")
+        Trips_querySet = Trips.objects.filter(
+            Q(in_station_time__contains=date) | Q(out_station_time__contains=date)).values("in_station", "out_station")
     if Trips_querySet:
         od = list(Trips_querySet)
         od_dict = pd.value_counts(od)
-        context['data'] = [{"in_station": i[0]["in_station"], "out_station": i[0]["out_station"], "count": i[1]} for i in od_dict.items()]
+        context['data'] = [{"in_station": i[0]["in_station"], "out_station": i[0]["out_station"], "count": i[1]} for i
+                           in od_dict.items()]
     else:
         context['ret'] = 1
         context['msg'] = "站点信息为空"
@@ -423,29 +397,3 @@ def get_OD_station(request, **kwargs):
             return JsonResponse({'ret': 1, 'msg': "不支持该类型的http访问"})
     else:
         return JsonResponse({'ret': 1, 'msg': "不支持该类型的http访问"})
-
-        # context = {
-        #     "station_name": [],
-        #     "station_route": [],
-        # }
-        # Station_query_set = Station.objects.all().values("station_name", "station_route")
-        # if Station_query_set:
-        #     station_name_list = [i["station_name"] for i in Station_query_set]
-        #     station_route_list = [i["station_route"] for i in Station_query_set]
-        #     context["station_name"] = station_name_list
-        #     context["station_route"] = station_route_list
-        #     name_route_dict = dict(zip(station_name_list, station_route_list))
-        #     context["name_route_dict"] = name_route_dict
-        #     Trips_query_set = Trips.objects.filter(in_station_time__contains='2020-01-01').values("in_station",
-        #                                                                                           "out_station")
-        #     if Trips_query_set:
-        #         od = []
-        #         for i in Trips_query_set:
-        #             od.append([i["in_station"], i["out_station"]])
-        #         od_dict = pd.value_counts(od)
-        #         context["od"] = [{"begin": i[0][0], "end": i[0][1],
-        #                           "route": [name_route_dict[i[0][0]], name_route_dict[i[0][1]]],
-        #                           "value": i[1]
-        #                           } for i in od_dict.items() if
-        #                          i[0][0] in name_route_dict.keys() and i[0][1] in name_route_dict.keys()]
-        # return JsonResponse(context)
