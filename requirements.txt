@@ -1,0 +1,11 @@
+asgiref==3.3.1
+Django==3.1.5
+django-cors-headers==3.7.0
+djangorestframework==3.12.2
+mysqlclient==2.0.3
+numpy==1.19.5
+pandas==1.2.1
+python-dateutil==2.8.1
+pytz==2020.5
+six==1.15.0
+sqlparse==0.4.1
