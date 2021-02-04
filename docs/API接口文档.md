@@ -1,4 +1,4 @@
-## API接口文档 V1.2.2
+## API接口文档 V1.2.3
 
 ### 登陆系统
 
@@ -1265,6 +1265,72 @@ http响应内容中，数据以json格式存储
     "msg":"获取数据失败"
 }
 ```
+
+#### 实时客流数据获取
+
+##### 单站点出入客流
+
+###### 请求消息
+
+```http
+GET /api/echarts/realtime?action=station_of_point HTTP/1.1
+```
+
+###### 请求参数
+
+http请求参数在消息体中，格式为json,示例如下
+
+```json
+{
+    "date":"2020-01-01",
+    "station":""
+}
+```
+
+- action为固定填写参数，表明所要指定完成的事务
+- date字段为固定填写时间
+- station字段固定填写指定的站点
+
+###### 响应消息
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+```
+
+###### 响应内容
+
+http响应消息body中，数据以json格式存储，
+
+如果获取信息成功，返回如下
+
+```json
+{
+    "ret": 0,
+    "in_list": [],
+    "out_list": [
+        {
+            "hour": 14,
+            "count": 1
+        },
+        {
+            "hour": 15,
+            "count": 1
+        }
+    ]
+}
+```
+
+如果获取信息失败，返回如下
+
+```json
+{
+    "ret": 1,
+    "msg": "请求消息不全"
+}
+```
+
+
 
 
 

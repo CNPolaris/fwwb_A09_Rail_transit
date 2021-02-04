@@ -11,6 +11,8 @@ echarts_api_urls = [
     url(r'^echarts/daily', echarts.get_daily_flow),
     # 用户年龄结构
     url('echarts/agestruct', echarts.get_age_struct),
+    # 实时客流数据
+    url(r'^echarts/realtime', echarts.real_time_dispatcher),
     # url('^echarts/data/dailyflow.json/(?P<year>[0-9]{4})/$', get_daily_year, name='dailyflow'),
     # # 单站的点出/入站客流分析
     # url('^echarts/data/singlesta/(?P<station>)/(?P<year>[0-9]{4})/(?P<month>[0-9]{2})/(?P<day>[0-9]{2})/$',

@@ -15,6 +15,8 @@ import pandas as pd
 """
 向echarts绘制图形提供数据集的api
 """
+TIME_LIST = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
+                   16, 17, 18, 19, 20, 21, 22, 23]
 
 
 def monthly_flow(request):
@@ -188,15 +190,11 @@ def get_age_struct(request):
 
 
 @csrf_exempt
-def get_station_date(request, station, year, month, day):
+def get_station_date(request):
     """
     该api提供查询具体到某站某天24时刻的出入客流
-    :param day:
-    :param month:
-    :param year:
-    :param station:
-    :param request:
-    :return:
+    :param request:GET
+    :return:json
     """
     if request.method == 'GET':
         context = {
@@ -204,30 +202,30 @@ def get_station_date(request, station, year, month, day):
             'in_list': [],
             'out_list': []
         }
-        # 使用Q语句通过或条件筛选出进站或出站是所查询station的集合
-        Sta_in_list = Trips.objects.filter(in_station=station,
-                                           in_station_time__contains='{}-{}-{}'.format(year, month, day)).values(
-            'in_station_time')
-        Sta_out_list = Trips.objects.filter(out_station=station,
-                                            out_station_time__contains='{}-{}-{}'.format(year, month, day)).values(
-            'out_station_time')
-        if Sta_in_list and Sta_out_list:
-            hour_dict_in = dict(zip(list(range(0, 24)), [0] * 24))
-            hour_dict_out = dict(zip(list(range(0, 24)), [0] * 24))
-
-            in_list = pd.value_counts([int(i['in_station_time'].strftime('%H')) for i in Sta_in_list]).to_dict()
-            out_list = pd.value_counts([int(i['out_station_time'].strftime('%H')) for i in Sta_out_list]).to_dict()
-            for i, o in zip(in_list.keys(), out_list.keys()):
-                hour_dict_in[i] = in_list[i]
-                hour_dict_out[o] = out_list[o]
-            context = {
-                'hour_list': list(range(0, 23)),
-                'in_list': [i for i in hour_dict_in.values()],
-                'out_list': [i for i in hour_dict_out.values()]
-            }
-            return JsonResponse(context)
-        else:
-            return JsonResponse(context)
+        # # 使用Q语句通过或条件筛选出进站或出站是所查询station的集合
+        # Sta_in_list = Trips.objects.filter(in_station=station,
+        #                                    in_station_time__contains='{}-{}-{}'.format(year, month, day)).values(
+        #     'in_station_time')
+        # Sta_out_list = Trips.objects.filter(out_station=station,
+        #                                     out_station_time__contains='{}-{}-{}'.format(year, month, day)).values(
+        #     'out_station_time')
+        # if Sta_in_list and Sta_out_list:
+        #     hour_dict_in = dict(zip(list(range(0, 24)), [0] * 24))
+        #     hour_dict_out = dict(zip(list(range(0, 24)), [0] * 24))
+        #
+        #     in_list = pd.value_counts([int(i['in_station_time'].strftime('%H')) for i in Sta_in_list]).to_dict()
+        #     out_list = pd.value_counts([int(i['out_station_time'].strftime('%H')) for i in Sta_out_list]).to_dict()
+        #     for i, o in zip(in_list.keys(), out_list.keys()):
+        #         hour_dict_in[i] = in_list[i]
+        #         hour_dict_out[o] = out_list[o]
+        #     context = {
+        #         'hour_list': list(range(0, 23)),
+        #         'in_list': [i for i in hour_dict_in.values()],
+        #         'out_list': [i for i in hour_dict_out.values()]
+        #     }
+        #     return JsonResponse(context)
+        # else:
+        #     return JsonResponse(context)
 
 
 @csrf_exempt
@@ -350,6 +348,46 @@ def get_peak_station(request, **kwargs):
                 "out_pressure": out_pressure_list
             }
         return JsonResponse(context)
+
+
+def station_of_point(request):
+    """
+    站点的点出入客流分析
+    :param request: GET /api/echarts/realtime?action=station_of_point
+    :return:json
+    """
+    context = {'ret': 0}
+    station = request.params.get('station', None)
+    date = request.params.get('date', None)
+    if station and date:
+        Sta_in_querySet = Trips.objects.filter(in_station=station,
+                                               in_station_time__contains=date).values('in_station_time')
+        Sta_out_querySet = Trips.objects.filter(out_station=station,
+                                                out_station_time__contains=date).values('out_station_time')
+        in_dict = pd.value_counts([int(i['in_station_time'].strftime('%H')) for i in Sta_in_querySet]).to_dict()
+        out_dict = pd.value_counts([int(i['out_station_time'].strftime('%H')) for i in Sta_out_querySet]).to_dict()
+        context['in_list'] = [{'hour': i, 'count': in_dict[i]}for i in TIME_LIST if i in in_dict]
+        context['out_list'] = [{'hour': i, 'count': out_dict[i]}for i in TIME_LIST if i in out_dict]
+
+    else:
+        context['ret'] = 1
+        context['msg'] = "请求消息不全"
+    return JsonResponse(context)
+
+
+def real_time_dispatcher(request):
+    """
+    实时客流情况分析事务调度器
+    :param request: GET /api/echarts/realtime
+    :return: json
+    """
+    if request.method == 'GET':
+        action = request.GET.get('action', None)
+        request.params = json.loads(request.body)
+        if action == 'station_of_point':
+            return station_of_point(request)
+    else:
+        return JsonResponse({'ret': 1, 'msg': " 不支持该类型的http请求"})
 
 
 def list_od(request):
