@@ -4,11 +4,51 @@
 
 ###### 请求消息
 
+```http
+POST /signin HTTP/1.1
+Content-Type: application/x-www-form-urlencoded
+```
+
 ###### 请求参数
+
+http请求消息body中参数以格式x-www-form-urlencoded存储
+
+需要携带如下参数
+
+- username 用户名
+- password 密码
 
 ###### 响应消息
 
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+```
+
 ###### 响应内容
+
+http响应消息body中，数据以json格式存储
+
+如果登录成功，返回如下
+
+```json
+{
+    'ret':0
+}
+```
+
+ret为0表示登录成功
+
+如果登录失败，返回登录失败的原因，示例如下
+
+```json
+{
+    "ret": 1,    
+    "msg":  "用户名或者密码错误"
+}
+```
+
+ret 不为 0 表示登录失败， msg字段描述登录失败的原因
 
 ### 系统数据API
 
