@@ -13,10 +13,10 @@ app_name = 'transit'
 
 urlpatterns = [
     # 首页路由
-
     # 登录登出
-    url(r'^signin', sign_in_out.signin),
-    url(r'^signout', sign_in_out.signout),
+    url(r'^api/signin', sign_in_out.signin),
+    url(r'^api/signout', sign_in_out.signout),
+
     # API模块
     url(r'^api/', include(echarts_api_urls)),
     url(r'^api/', include(manager_urls)),
