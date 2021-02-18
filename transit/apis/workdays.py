@@ -166,6 +166,13 @@ def dispatcher(request):
     :param request:
     :return:json
     """
+    if 'usertype' not in request.session:
+        return JsonResponse({
+            'ret': 302,
+            'msg': '未登录',
+            'redirect': 'sign.html'
+        }, status=302)
+
     # 将请求参数统一放在request的params属性中，方便后续处理
     # GET请求 参数在url中，通过request对象的GET属性获取
     if request.method == 'GET':
@@ -180,11 +187,11 @@ def dispatcher(request):
     action = request.params['action']
     if action == 'list_workday':
         return list_workday(request)
-    elif action == 'add_workday':
+    elif action == 'add_workday' and request.session['usertype'] == 'admin':
         return add_workday(request)
-    elif action == 'modify_workday':
+    elif action == 'modify_workday' and request.session['usertype'] == 'admin':
         return modify_workday(request)
-    elif action == 'del_workday':
+    elif action == 'del_workday' and request.session['usertype'] == 'admin':
         return delete_workday(request)
     else:
         return JsonResponse({'ret': 1, 'msg': '不支持该类型http请求'})

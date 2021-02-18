@@ -250,6 +250,13 @@ def dispatcher(request):
     :param request:
     :return:json
     """
+    if 'usertype' not in request.session:
+        return JsonResponse({
+            'ret': 302,
+            'msg': '未登录',
+            'redirect': 'sign.html'
+        }, status=302)
+
     # 将请求参数统一放在request的params属性中，方便后续处理
     # GET请求 参数在url中，通过request对象的GET属性获取
     if request.method == 'GET':
@@ -264,11 +271,11 @@ def dispatcher(request):
     action = request.params['action']
     if action == 'list_trip':
         return list_trip(request)
-    elif action == 'add_trip':
+    elif action == 'add_trip' and request.session['usertype'] == 'admin':
         return add_trip(request)
-    elif action == 'modify_trip':
+    elif action == 'modify_trip' and request.session['usertype'] == 'admin':
         return modify_trip(request)
-    elif action == 'del_trip':
+    elif action == 'del_trip' and request.session['usertype'] == 'admin':
         return delete_trip(request)
     else:
         return JsonResponse({'ret': 1, 'msg': '不支持该类型http请求'})

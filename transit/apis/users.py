@@ -201,6 +201,13 @@ def dispatcher(request):
     :param request:
     :return:json
     """
+    if 'usertype' not in request.session:
+        return JsonResponse({
+            'ret': 302,
+            'msg': '未登录',
+            'redirect': 'sign.html'
+        }, status=302)
+
     # 将请求参数统一放在request的params属性中，方便后续处理
     # GET请求 参数在url中，通过request对象的GET属性获取
     if request.method == 'GET':
@@ -215,11 +222,11 @@ def dispatcher(request):
     action = request.params['action']
     if action == 'list_user':
         return list_user(request)
-    elif action == 'add_user':
+    elif action == 'add_user' and request.session['usertype'] == 'admin':
         return add_user(request)
-    elif action == 'modify_user':
+    elif action == 'modify_user' and request.session['usertype'] == 'admin':
         return modify_user(request)
-    elif action == 'del_user':
+    elif action == 'del_user' and request.session['usertype'] == 'admin':
         return delete_user(request)
     else:
         return JsonResponse({'ret': 1, 'msg': '不支持该类型http请求'})
