@@ -72,12 +72,18 @@ def get_month_flow(request):
     :param request:GET /api/echarts/month?action=list_month&date=2020-01 HTTP/1.1
     :return: json
     """
+    if 'usertype' not in request.session:
+        return JsonResponse({
+            'ret': 302,
+            'msg': '未登录',
+            'redirect': 'sign.html'
+        }, status=302)
     if request.method == 'GET':
         request.params = request.GET
         action = request.params.get('action', None)
         date = request.params.get('date', None)
         year = request.params.get('date', None)
-        if action and date:
+        if action == 'list_month' and date:
             return monthly_flow(request)
         elif year or (action and date is None):
             return all_month_flow(request)
@@ -90,7 +96,7 @@ def get_month_flow(request):
 def daily_flow(request):
     """
     返回具体date的客流量
-    :param request: request.params.get('date')
+    :param request:GET /api/echarts/daily?action=list_daily&date=2020-01-01
     :return: json
     """
     date = request.params['date']
@@ -107,7 +113,7 @@ def daily_flow(request):
 def list_daily(request):
     """
     列出所有日期的当日客流量
-    :param request: GET
+    :param request: GET /api/echarts/daily?action=list_daily
     :return: json
     """
     context = {'ret': 0}
@@ -124,14 +130,21 @@ def list_daily(request):
 def get_daily_flow(request):
     """
     查询某一天的出行量业务分发器
-    :param request: GET
+    :param request: GET /api/echarts/daily?action=list_daily
     :return: json
     """
+    if 'usertype' not in request.session:
+        return JsonResponse({
+            'ret': 302,
+            'msg': '未登录',
+            'redirect': 'sign.html'
+        }, status=302)
+
     if request.method == "GET":
         request.params = request.GET
         action = request.params.get('action', None)
         date = request.params.get('date', None)
-        if action and date:
+        if action == 'list_daily' and date:
             return daily_flow(request)
         elif action and date is None:
             return list_daily(request)
@@ -143,11 +156,18 @@ def get_daily_flow(request):
 def get_age_struct(request):
     """
     用户年龄结构分析
-    :param request:Get
+    :param request:GET /api/echarts/agestruct?action=age_struct
     :return: Json
     age: 用户年龄的分组
     count: 不同年龄段的用户数量
     """
+    if 'usertype' not in request.session:
+        return JsonResponse({
+            'ret': 302,
+            'msg': '未登录',
+            'redirect': 'sign.html'
+        }, status=302)
+
     if request.method == 'GET':
         request.params = request.GET
         action = request.params.get('action', None)
@@ -378,9 +398,16 @@ def station_of_point(request):
 def real_time_dispatcher(request):
     """
     实时客流情况分析事务调度器
-    :param request: GET /api/echarts/realtime
+    :param request: GET /api/echarts/realtime?action=station_of_point
     :return: json
     """
+    if 'usertype' not in request.session:
+        return JsonResponse({
+            'ret': 302,
+            'msg': '未登录',
+            'redirect': 'sign.html'
+        }, status=302)
+
     if request.method == 'GET':
         action = request.GET.get('action', None)
         request.params = json.loads(request.body)
@@ -393,7 +420,7 @@ def real_time_dispatcher(request):
 def list_od(request):
     """
     根据date列出所有站点的OD客流
-    :param request:GET
+    :param request:
     :return:json
     """
     context = {'ret': 0}
@@ -421,10 +448,17 @@ def list_od(request):
 def get_OD_station(request, **kwargs):
     """
     获取站点的OD客流
-    :param request:
+    :param request:GET /api/echarts/od?action=list_od
     :param kwargs:
     :return:
     """
+    if 'usertype' not in request.session:
+        return JsonResponse({
+            'ret': 302,
+            'msg': '未登录',
+            'redirect': 'sign.html'
+        }, status=302)
+
     if request.method == "GET":
         request.params = json.loads(request.body)
         action = request.params.get('action', None)
