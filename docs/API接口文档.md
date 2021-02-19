@@ -1,4 +1,4 @@
-## API接口文档 V1.2.3
+## API接口文档 V1.3.5
 
 ### 登陆系统
 
@@ -1370,7 +1370,38 @@ http响应消息body中，数据以json格式存储，
 }
 ```
 
+### 数据导出API
 
+######  请求消息
+
+```http
+GET /api/exports?model=station HTTP/1.1
+```
+
+###### 请求参数
+
+http请求消息在url中，参数model固定填写要导出的目标model，不可为空
+
+###### 响应消息
+
+```http
+HTTP/1.1 200 OK
+Content-Type:application/octet-stream
+```
+
+###### 响应内容
+
+如果数据能够成功导出，应会返回下载选项
+
+如果数据无法导出，消息以json格式存储，示例如下
+
+```json
+{
+    'ret': 302,
+    'msg': '需要高级管理员权限才可导出数据',
+    'redirect': '/sign.html'
+}
+```
 
 
 
