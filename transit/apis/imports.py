@@ -5,7 +5,7 @@
 from datetime import datetime
 
 from django.http import HttpResponse, JsonResponse
-from .models import Trips, Users, Workdays, Station, TripStatistics
+from transit.models import Trips, Users, Workdays, Station, TripStatistics
 from django.views.decorators.csrf import csrf_exempt
 import time
 import django

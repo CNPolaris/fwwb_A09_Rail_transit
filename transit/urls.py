@@ -6,9 +6,9 @@
 # 引入path
 from django.conf.urls import url, include
 # 正在部署的应用的名称
-from transit import views, sign_in_out
+from .apis import sign_in_out
 from .apis.urls import echarts_api_urls, manager_urls
-from .imports import load_dataoftrip, load_dataofstation, load_dataofuser, load_dataofworkday
+from transit.apis.imports import load_dataoftrip, load_dataofstation, load_dataofuser, load_dataofworkday
 app_name = 'transit'
 
 urlpatterns = [
