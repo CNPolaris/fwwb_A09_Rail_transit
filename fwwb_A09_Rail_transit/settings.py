@@ -9,7 +9,7 @@ https://docs.djangoproject.com/en/3.0/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.0/ref/settings/
 """
-
+import datetime
 import os
 import sys
 
@@ -36,8 +36,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    # 'transit.apps.TransitConfig',
-    'transit'
+    'transit.apps.TransitConfig',
+    'rest_framework'
+    # 'transit'
 ]
 
 MIDDLEWARE = [
@@ -78,8 +79,8 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'transit',
         'USER': 'root',
-        'PASSWORD': '123',
-        'HOST': 'localhost',
+        'PASSWORD': 'cnpolaris',
+        'HOST': '47.117.118.196',
         'PORT': '3306',
     }
 }
@@ -101,7 +102,20 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
-
+REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated'
+    ),
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
+        'rest_framework.authentication.BasicAuthentication',
+        'rest_framework.authentication.SessionAuthentication'
+    )
+}
+JWT_AUTH = {
+    # 设置token有效时间
+    'JWT_EXPIRATION_DELTA': datetime.timedelta(seconds=60 * 60 * 2)
+}
 # Internationalization
 # https://docs.djangoproject.com/en/3.0/topics/i18n/
 

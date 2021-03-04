@@ -3,7 +3,7 @@
 # @FileName: urls.py
 # @Author  : CNPolaris
 from django.conf.urls import url, include
-from transit.apis import trips, stations, workdays, users, sign_in_out
+from transit.apis import trips, stations, workdays, users, user_in_out
 from transit.apis import echarts, exports
 echarts_api_urls = [
     # 单月客流
@@ -31,8 +31,9 @@ echarts_api_urls = [
 
 api_urls = [
     # 登录登出
-    url(r'^signin', sign_in_out.signin),
-    url(r'^signout', sign_in_out.signout),
+    url(r'^login', user_in_out.user_login),
+    url(r'^logout', user_in_out.user_logout),
+    url(r'^user/info',user_in_out.get_user_info),
     # excel导出
     url(r'exports', exports.download),
     # model基础数据管理
