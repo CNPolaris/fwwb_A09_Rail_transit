@@ -2,6 +2,11 @@
 # @Time    : 2021/1/31 9:11
 # @FileName: stations.py
 # @Author  : CNPolaris
+from django.contrib.auth.models import User
+from rest_framework_jwt.serializers import jwt_decode_handler
+from rest_framework_jwt.settings import api_settings
+
+from userprofile.models import Profile
 
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -21,28 +26,30 @@ def list_station(request):
     :param request:GET
     :return:json
     """
-    sid = request.params.get('sid', None)
-    name = request.params.get('name', None)
-    route = request.params.get('route', None)
-    area = request.params.get('area', None)
+    sid = request.params.get('station_id', None)
+    name = request.params.get('station_name', None)
+    route = request.params.get('station_route', None)
+    area = request.params.get('admin_area', None)
     # 要获取的第几页
     pagenum = request.params.get('page', 1)
-    context = {'ret': 0}
-    querySet = Station.objects.all().order_by('station_id')
+    context = {'code': 2000}
+    sort = request.params.get('sort', 'station_id')
+    querySet = Station.objects.all()
     # 每页要显示的多少条记录
     pagelimit = 50
     # 主键id在路由中则直接能够查询唯一结果
     if sid:
         querySet = querySet.filter(station_id=sid).values()
         if querySet is not None:
-            paginator = Paginator(querySet.values(), pagelimit)
-            page = paginator.page(pagenum)
-            context['retlist'] = list(page)
+            # paginator = Paginator(querySet.values(), pagelimit)
+            # page = paginator.page(pagenum)
+            context['code'] = 2000
+            context['data'] = list(querySet)
             # total指定一共有多少页数据
-            context['total'] = paginator.count
+            # context['total'] = paginator.count
         else:
-            context['ret'] = 1
-            context['msg'] = "不存在该id为{}的站点".format(sid)
+            context['code'] = 1000
+            context['message'] = "不存在该id为{}的站点".format(sid)
         return JsonResponse(context)
     elif name:
         try:
@@ -50,16 +57,16 @@ def list_station(request):
             if querySet is not None:
                 paginator = Paginator(querySet.values(), pagelimit)
                 page = paginator.page(pagenum)
-                context['retlist'] = list(page)
+                context['code'] = 2000
+                context['data'] = list(page)
                 # total指定一共有多少页数据
                 context['total'] = paginator.count
             else:
-                context['ret'] = 1
-                context['msg'] = "不存在站点名为{}的站点信息".format(name)
+                context['code'] = 1000
+                context['message'] = "不存在站点名为{}的站点信息".format(name)
         except BaseException as e:
-            print(e)
-            context['ret'] = 1
-            context['msg'] = "通过站点名{}查询出现错误".format(name)
+            context['code'] = 1000
+            context['message'] = "通过站点名{}查询出现错误".format(name)
         return JsonResponse(context)
     elif route:
         try:
@@ -68,14 +75,16 @@ def list_station(request):
             if querySet is not None:
                 paginator = Paginator(querySet.values(), pagelimit)
                 page = paginator.page(pagenum)
-                context['retlist'] = list(page)
+                context['code'] = 2000
+                context['data'] = list(page)
                 # total指定一共有多少页数据
                 context['total'] = paginator.count
             else:
-                context['ret'] = 1
-                context['msg'] = "{}线路上没有站点".format(route)
+                context['code'] = 1000
+                context['message'] = "{}线路上没有站点".format(route)
         except BaseException:
-            context['msg'] = "通过站点查询存在错误"
+            context['code'] = 1000
+            context['message'] = "通过站点查询存在错误"
         return JsonResponse(context)
     elif area:
         try:
@@ -83,20 +92,22 @@ def list_station(request):
             if querySet is not None:
                 paginator = Paginator(querySet.values(), pagelimit)
                 page = paginator.page(pagenum)
-                context['retlist'] = list(page)
+                context['code'] = 2000
+                context['data'] = list(page)
                 # total指定一共有多少页数据
                 context['total'] = paginator.count
             else:
-                context['ret'] = 1
-                context['msg'] = "{}行政区域没有站点".format(area)
+                context['code'] = 1000
+                context['message'] = "{}行政区域没有站点".format(area)
         except BaseException:
-            context['ret'] = 1
-            context['msg'] = "通过行政区域查询记录出现错误"
+            context['code'] = 1000
+            context['message'] = "通过行政区域查询记录出现错误"
         return JsonResponse(context)
     else:
-        paginator = Paginator(querySet.values(), pagelimit)
+        paginator = Paginator(querySet.values().order_by(sort), pagelimit)
         page = paginator.page(pagenum)
-        context['retlist'] = list(page)
+        context['code'] = 2000
+        context['data'] = list(page)
         # total指定一共有多少页数据
         context['total'] = paginator.count
     return JsonResponse(context)
@@ -159,24 +170,23 @@ def modify_station(request):
     :param request: PUT/json
     :return:json
     """
-    context = {'ret': 0}
-    sid = request.params['sid']
-    newdata = request.params['newdata']
-
-    try:
-        station = Station.objects.get(station_id=sid)
-    except BaseException:
-        context['ret'] = 1
-        context['msg'] = 'id为{}的记录不存在'.format(sid)
-        return JsonResponse(context)
-    if 'station_name' in newdata:
-        station.station_name = newdata['station_name']
-    if 'station_route' in newdata:
-        station.station_route = newdata['station_route']
-    if 'admin_area' in newdata:
-        station.admin_area = newdata['admin_area']
-    station.save()
-    context['ret'] = 0
+    context = {'code': 1000}
+    sid = request.params['station_id']
+    station = Station.objects.get(station_id=sid)
+    if station:
+        # 提取数据
+        station_name = request.params.get('station_name', None)
+        station_route = request.params.get('station_route', None)
+        admin_area = request.params.get('admin_area', None)
+        if station_name:
+            station.station_name = station_name
+        if station_route:
+            station.station_route = station_route
+        if admin_area:
+            station.admin_area = admin_area
+        station.save()
+        context['code'] = 2000
+        context['message'] = "修改成功"
     return JsonResponse(context)
 
 
@@ -186,15 +196,17 @@ def delete_station(request):
     :param request: DELETE/json
     :return: json
     """
-    context = {'ret': 0}
-    sid = request.params['sid']
+    context = {'code': 1000}
+    sid = request.params['station_id']
     try:
         station = Station.objects.get(station_id=sid)
+        station.delete()
+        context['code'] = 2000
+        context['message'] = 'id为{}的记录删除成功'.format(sid)
     except BaseException:
-        context['ret'] = 1
-        context['msg'] = 'id为{}的记录不存在'.format(sid)
+        context['code'] = 1000
+        context['message'] = 'id为{}的记录不存在'.format(sid)
         return JsonResponse(context)
-    station.delete()
     return JsonResponse(context)
 
 
@@ -204,32 +216,44 @@ def dispatcher(request):
     :param request:
     :return:json
     """
-    if 'usertype' not in request.session:
-        return JsonResponse({
-            'ret': 302,
-            'msg': '未登录',
-            'redirect': 'sign.html'
-        }, status=302)
+    token = request.GET.get('token')
+    toke_user = jwt_decode_handler(token)
+    user_id = toke_user["user_id"]
+    user = User.objects.get(id=user_id)
+    if user:
+        if Profile.objects.filter(user_id=user_id).exists():
+            profile = Profile.objects.get(user_id=user_id)
 
-    # 将请求参数统一放在request的params属性中，方便后续处理
-    # GET请求 参数在url中，通过request对象的GET属性获取
-    if request.method == 'GET':
-        request.params = request.GET
+            # 将请求参数统一放在request的params属性中，方便后续处理
+            # GET请求 参数在url中，通过request对象的GET属性获取
+            if request.method == 'GET':
+                request.params = request.GET
 
-    # POST/PUT/DELETE 请求 参数从request对象的body属性中获取
-    elif request.method in ['POST', 'PUT', 'DELETE']:
-        # 根据接口，POST/PUT/DELETE 请求的消息体都是 json格式
-        request.params = json.loads(request.body)
+            # POST/PUT/DELETE 请求 参数从request对象的body属性中获取
+            elif request.method in ['POST', 'PUT', 'DELETE']:
+                # 根据接口，POST/PUT/DELETE 请求的消息体都是 json格式
+                request.params = json.loads(request.body)
 
-    # 根据不同的action分派给不同的函数进行处理
-    action = request.params['action']
-    if action == 'list_station':
-        return list_station(request)
-    elif action == 'add_station' and request.session['usertype'] == 'admin':
-        return add_station(request)
-    elif action == 'modify_station' and request.session['usertype'] == 'admin':
-        return modify_station(request)
-    elif action == 'del_station' and request.session['usertype'] == 'admin':
-        return delete_station(request)
+            # 根据不同的action分派给不同的函数进行处理
+            action = request.params['action']
+
+            if profile.roles != 'admin':
+                if action == 'list_station':
+                    return list_station(request)
+
+            elif profile.roles == 'admin':
+                if action == 'list_station':
+                    return list_station(request)
+                elif action == 'add_station':
+                    return add_station(request)
+                elif action == 'modify_station':
+                    return modify_station(request)
+                elif action == 'del_station':
+                    return delete_station(request)
+                else:
+                    return JsonResponse({'code': 1000, 'message': '不支持该类型http请求'})
     else:
-        return JsonResponse({'ret': 1, 'msg': '不支持该类型http请求'})
+        return JsonResponse({
+            'code': 1000,
+            'message': "无权修改"
+        })

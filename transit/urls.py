@@ -8,6 +8,7 @@ from django.conf.urls import url, include
 # 正在部署的应用的名称
 from .apis.urls import echarts_api_urls, api_urls
 from transit.apis.imports import load_dataoftrip, load_dataofstation, load_dataofuser, load_dataofworkday
+from userprofile.urls import userprofile
 app_name = 'transit'
 
 urlpatterns = [
@@ -16,6 +17,8 @@ urlpatterns = [
     # API模块
     url(r'^api/', include(echarts_api_urls)),
     url(r'^api/', include(api_urls)),
+    # 用户相关
+    url(r'^api/userprofile/', include(userprofile)),
 
     # import数据模块
     url('load_dataoftrip', load_dataoftrip, name='load_data'),

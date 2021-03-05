@@ -37,8 +37,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'transit.apps.TransitConfig',
-    'rest_framework'
+    'rest_framework',
     # 'transit'
+    'userprofile'
 ]
 
 MIDDLEWARE = [
@@ -52,7 +53,6 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'fwwb_A09_Rail_transit.urls'
-
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -79,8 +79,8 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'transit',
         'USER': 'root',
-        'PASSWORD': 'cnpolaris',
-        'HOST': '47.117.118.196',
+        'PASSWORD': '123',
+        'HOST': '127.0.0.1',
         'PORT': '3306',
     }
 }
@@ -136,3 +136,5 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = (
     os.path.join(BASE_DIR, "static/"),
 )
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')

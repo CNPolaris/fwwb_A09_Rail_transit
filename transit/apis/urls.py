@@ -5,6 +5,7 @@
 from django.conf.urls import url, include
 from transit.apis import trips, stations, workdays, users, user_in_out
 from transit.apis import echarts, exports
+
 echarts_api_urls = [
     # 单月客流
     url(r'^echarts/month', echarts.get_month_flow),
@@ -29,16 +30,40 @@ echarts_api_urls = [
 
 ]
 
+trip_urls = [
+    url(r'list', trips.dispatcher),
+    url(r'create', trips.dispatcher),
+    url(r'update', trips.dispatcher),
+    url(r'delete', trips.dispatcher)
+]
+station_urls = [
+    url(r'list', stations.dispatcher),
+    url(r'create', stations.dispatcher),
+    url(r'update', stations.dispatcher),
+    url(r'delete', stations.dispatcher),
+]
+workday_urls = [
+    url(r'list', workdays.dispatcher),
+    url(r'create', workdays.dispatcher),
+    url(r'update', workdays.dispatcher),
+    url(r'delete', workdays.dispatcher),
+]
+passenger_url = [
+    url(r'list', users.dispatcher),
+    url(r'create', users.dispatcher),
+    url(r'update', users.dispatcher),
+    url(r'delete', users.dispatcher),
+]
 api_urls = [
-    # 登录登出
-    url(r'^login', user_in_out.user_login),
-    url(r'^logout', user_in_out.user_logout),
-    url(r'^user/info',user_in_out.get_user_info),
+    # # 登录登出
+    # url(r'^login', user_in_out.user_login),
+    # url(r'^logout', user_in_out.user_logout),
+    # url(r'^user/info', user_in_out.get_user_info),
     # excel导出
     url(r'exports', exports.download),
     # model基础数据管理
-    url(r'manager/trips', trips.dispatcher),
-    url(r'manager/station', stations.dispatcher),
-    url(r'manager/workday', workdays.dispatcher),
-    url(r'manager/passenger', users.dispatcher)
+    url(r'manager/trip/', include(trip_urls)),
+    url(r'manager/station/', include(station_urls)),
+    url(r'manager/workday/', include(workday_urls)),
+    url(r'manager/passenger/', include(passenger_url))
 ]

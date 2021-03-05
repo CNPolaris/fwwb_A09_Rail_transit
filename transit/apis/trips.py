@@ -2,6 +2,7 @@
 # @Time    : 2021/1/30 17:11
 # @FileName: trips.py
 # @Author  : CNPolaris
+from django.contrib.auth.models import User
 from django.db.models import Q
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -10,6 +11,10 @@ from transit.models import Trips, Users, Station
 # 增加对分页的支持
 from django.core.paginator import Paginator, EmptyPage
 import datetime
+from rest_framework_jwt.serializers import jwt_decode_handler
+from rest_framework_jwt.settings import api_settings
+
+from userprofile.models import Profile
 
 _FIELDS = ['user_id', 'in_station', 'in_station_time', 'out_station', 'out_station_time', 'channel', "price"]
 
@@ -30,128 +35,131 @@ def list_trip(request):
     pce = request.params.get('price', None)
     # 要获取的第几页
     pagenum = request.params.get('page', 1)
-    context = {'ret': 0}
+    # 每页的限制数
+    pagelimit = request.params.get('limit', 40)
+    sort = request.params.get('sort')
+    context = {'code': 1000}
     querySet = Trips.objects.all()
-    # 每页要显示的多少条记录
-    pagelimit = 50
     # 主键id在路由中则直接能够查询唯一结果
     if id:
         try:
-            querySet = querySet.get(id=id).values()
-            context['retlist'] = list(querySet)
+            querySet = querySet.filter(id=id).values()
+            context['code'] = 2000
+            context['data'] = list(querySet)
             return JsonResponse(context)
         except BaseException as e:
-            print(e)
-            context['ret'] = 1
-            context['msg'] = "不存在该id"
-            return JsonResponse(context)
+            context['code'] = 1000
+            context['message'] = "不存在该id"
+            # return JsonResponse(context)
     elif uid:
         querySet = querySet.filter(user_id=uid).values()
         if querySet is not None:
-            paginator = Paginator(querySet.values(), pagelimit)
+            paginator = Paginator(querySet.values().order_by(sort), pagelimit)
             page = paginator.page(pagenum)
-            context['retlist'] = list(page)
+            context['code'] = 2000
+            context['data'] = list(page)
             # total指定一共有多少页数据
             context['total'] = paginator.count
         else:
-            context['ret'] = 1
-            context['msg'] = "不存在该乘客的出行记录"
-        return JsonResponse(context)
+            context['code'] = 1000
+            context['message'] = "不存在该乘客的出行记录"
+        # return JsonResponse(context)
     elif station:
         try:
-            querySet = querySet.filter(Q(in_station=station) | Q(out_station=station)).values()
+            querySet = querySet.filter(Q(in_station=station) | Q(out_station=station)).values().order_by(sort)
             if querySet is not None:
                 paginator = Paginator(querySet.values(), pagelimit)
                 page = paginator.page(pagenum)
-                context['retlist'] = list(page)
+                context['code'] = 2000
+                context['data'] = list(page)
                 # total指定一共有多少页数据
                 context['total'] = paginator.count
             else:
-                context['ret'] = 1
-                context['msg'] = "不存在该站点的出行记录"
+                context['code'] = 1000
+                context['message'] = "不存在该站点的出行记录"
         except BaseException as e:
-            print(e)
-            context['ret'] = 1
-            context['msg'] = "不存在该站点"
-        return JsonResponse(context)
+            context['code'] = 1000
+            context['message'] = "不存在该站点"
+        # return JsonResponse(context)
     elif date:
         try:
-            querySet = querySet.filter(Q(in_station_time__contains=date) | Q(out_station_time__contains=date)).values()
+            querySet = querySet.filter(Q(in_station_time__contains=date) | Q(out_station_time__contains=date)).values().order_by(sort)
             if querySet is not None:
                 paginator = Paginator(querySet.values(), pagelimit)
                 page = paginator.page(pagenum)
-                context['retlist'] = list(page)
+                context['code'] = 2000
+                context['data'] = list(page)
                 # total指定一共有多少页数据
                 context['total'] = paginator.count
             else:
-                context['ret'] = 1
-                context['msg'] = "不存在该日期的出行记录"
+                context['code'] = 1000
+                context['message'] = "不存在该日期的出行记录"
         except BaseException as e:
-            context['msg'] = "日期查询出行记录存在错误"
-        return JsonResponse(context)
+            context['message'] = "日期查询出行记录存在错误"
+        # return JsonResponse(context)
     elif chan:
         try:
             querySet = querySet.filter(channel=chan).values()
             if querySet is not None:
-                paginator = Paginator(querySet.values(), pagelimit)
+                paginator = Paginator(querySet.values().order_by(sort), pagelimit)
                 page = paginator.page(pagenum)
-                context['retlist'] = list(page)
+                context['code'] = 2000
+                context['data'] = list(page)
                 # total指定一共有多少页数据
                 context['total'] = paginator.count
             else:
-                context['ret'] = 1
-                context['msg'] = "不存在该乘客的出行记录"
+                context['code'] = 1000
+                context['message'] = "不存在该乘客的出行记录"
         except BaseException as e:
-            print(e)
-            context['ret'] = 1
-            context['msg'] = "通过购票方式查询出行记录出现错误"
-        return JsonResponse(context)
+            context['code'] = 1000
+            context['message'] = "通过购票方式查询出行记录出现错误"
+        # return JsonResponse(context)
     elif pce:
         try:
             querySet = querySet.filter(price=pce).values()
             if querySet is not None:
-                paginator = Paginator(querySet.values(), pagelimit)
+                paginator = Paginator(querySet.values().order_by(sort), pagelimit)
                 page = paginator.page(pagenum)
-                context['retlist'] = list(page)
+                context['code'] = 2000
+                context['data'] = list(page)
                 # total指定一共有多少页数据
                 context['total'] = paginator.count
             else:
-                context['ret'] = 1
-                context['msg'] = "该票价的出行记录为空"
+                context['code'] = 1000
+                context['message'] = "该票价的出行记录为空"
         except BaseException as e:
-            print(e)
-            context['ret'] = 1
-            context['msg'] = "通过票价查询出行记录出现错误"
-        return JsonResponse(context)
+            context['code'] = 1000
+            context['message'] = "通过票价查询出行记录出现错误"
+        # return JsonResponse(context)
     else:
-        paginator = Paginator(querySet.values(), pagelimit)
+        paginator = Paginator(querySet.values().order_by(sort), pagelimit)
         page = paginator.page(pagenum)
-        context['retlist'] = list(page)
+        context['code'] = 2000
+        context['data'] = list(page)
         # total指定一共有多少页数据
         context['total'] = paginator.count
     return JsonResponse(context)
 
 
-def data_valid(data):
+def data_valid(**kwargs):
     """
     用来代替不能使用表单类的情况下数据的验证器
     :param data:
     :return: Bool
     """
-    fields = ['in_station_time', 'out_station', 'out_station_time', 'channel', "price"]
-    if 'user_id' not in data or data['user_id'] is None:
+    if kwargs['user_id'] is None:
         return False
-    if 'in_station' not in data or not Station.objects.get(station_name=data['in_station']):
+    if kwargs['in_station'] is None:
         return False
-    if 'in_station_time' not in data or data['in_station_time'] is None:
+    if kwargs['in_station_time'] is None:
         return False
-    if 'out_station' not in data or Station.objects.get(station_name=data['out_station']):
+    if kwargs['out_station'] is None:
         return False
-    if 'out_station_time' not in data or data['out_station_time'] is None:
+    if kwargs['out_station_time'] is None:
         return False
-    if 'channel' not in data or not isinstance(data['channel'], int):
+    if kwargs['channel'] is None:
         return False
-    if 'price' not in data or not isinstance(data['peice'], int):
+    if kwargs['price'] is None:
         return False
     return True
 
@@ -164,32 +172,35 @@ def add_trip(request):
     :return: json
     """
     # TODO:还是希望通过表单类来实现数据添加
-    context = {'ret': 0}
-    data = request.params.get("data", None)
-    if data is not None:
-        if data_valid(data) is True:
-            for key in ['in_station_time', 'out_station_time']:
-                data[key] = datetime.datetime.strptime(data[key], "%Y-%m-%d %H:%M:%S.%f")
-            new_trip = Trips(in_station=data['in_station'],
-                             in_station_time=data['in_station_time'],
-                             out_station=data['out_station'],
-                             out_station_time=data['out_station_time'],
-                             channel=data['channel'],
-                             price=data['price'])
-            try:
-                new_trip.user_id = Users.objects.get(user_id=data['user_id'])
-                new_trip.save()
-            except BaseException:
-                context['ret'] = 1
-                context['msg'] = 'user_id不存在'
-                return JsonResponse(context)
-            context['id'] = new_trip.id
-        else:
-            context['ret'] = 1
-            context['msg'] = "表单不全"
+    context = {'code': 2000}
+    # 提取数据
+    user_id = request.params.get('user_id_id')
+    in_station = request.params.get('in_station', None)
+    in_station_time = request.params.get('in_station_time', None)
+    out_station = request.params.get('out_station', None)
+    out_station_time = request.params.get('out_station_time', None)
+    price = request.params.get('price', None)
+    channel = request.params.get('channel', None)
+
+    if data_valid(user_id, in_station, in_station_time, out_station, out_station_time, price, channel) is True:
+
+        new_trip = Trips(in_station=in_station,
+                         in_station_time=datetime.datetime.strptime(in_station_time, "%Y-%m-%d %H:%M:%S.%f"),
+                         out_station=out_station,
+                         out_station_time=datetime.datetime.strptime(out_station_time, "%Y-%m-%d %H:%M:%S.%f"),
+                         channel=channel,
+                         price=price)
+        try:
+            new_trip.user_id = Users.objects.get(user_id=user_id)
+            new_trip.save()
+        except BaseException:
+            context['code'] = 1000
+            context['message'] = 'user_id不存在'
+            return JsonResponse(context)
+        context['id'] = new_trip.id
     else:
-        context['ret'] = 1
-        context['msg'] = "表单不能为空"
+        context['code'] = 1000
+        context['message'] = "表单不全"
     return JsonResponse(context)
 
 
@@ -199,30 +210,35 @@ def modify_trip(request):
     :param request: PUT/json
     :return:json
     """
-    context = {'ret': 0}
+    context = {'code': 0}
     tid = request.params['id']
-    newdata = request.params['newdata']
-
-    try:
-        trip = Trips.objects.get(id=tid)
-    except BaseException:
-        context['ret'] = 1
-        context['msg'] = 'id为{}的记录不存在'.format(tid)
-        return JsonResponse(context)
-    if 'in_station' not in newdata or not Station.objects.get(station_name=newdata['in_station']):
-        trip.in_station = newdata['in_station']
-    if 'in_station_time' not in newdata or newdata['in_station_time'] is None:
-        trip.in_station_time = datetime.datetime.strptime(newdata['in_station_time'], "%Y-%m-%d %H:%M:%S.%f")
-    if 'out_station' not in newdata or Station.objects.get(station_name=newdata['out_station']):
-        trip.out_station = newdata['out_station']
-    if 'out_station_time' not in newdata or newdata['out_station_time'] is None:
-        trip.out_station_time = datetime.datetime.strptime(newdata['out_station_time'], "%Y-%m-%d %H:%M:%S.%f")
-    if 'channel' not in newdata or not isinstance(newdata['channel'], int):
-        trip.channel = newdata['channel']
-    if 'price' not in newdata or not isinstance(newdata['peice'], int):
-        trip.price = newdata['price']
-    trip.save()
-    context['ret'] = 0
+    # 查找要修改的数据项
+    trip = Trips.objects.get(id=tid)
+    if trip:
+        # 提取数据
+        in_station = request.params.get('in_station', None)
+        in_station_time = request.params.get('in_station_time', None)
+        out_station = request.params.get('out_station', None)
+        out_station_time = request.params.get('out_station_time', None)
+        price = request.params.get('price', None)
+        channel = request.params.get('channel', None)
+        # 修改数据
+        if in_station is not None:
+            trip.in_station = in_station
+        if in_station_time is not None:
+            trip.in_station_time = in_station_time
+        if out_station is not None:
+            trip.out_station = out_station
+        if out_station_time is not None:
+            trip.out_station_time = out_station_time
+        if channel is not None:
+            trip.channel = channel
+        if price is not None:
+            trip.price = price
+        # 保存
+        trip.save()
+    context['code'] = 2000
+    context['message'] = "修改成功"
     return JsonResponse(context)
 
 
@@ -232,15 +248,17 @@ def delete_trip(request):
     :param request: DELETE/json
     :return: json
     """
-    context = {'ret': 0}
+    context = {'code': 1000}
     tid = request.params['id']
     try:
         trip = Trips.objects.get(id=tid)
+        trip.delete()
+        context['code'] = 2000
+        context['message'] = 'id为{}的记录删除成功'.format(tid)
     except BaseException:
-        context['ret'] = 1
-        context['msg'] = 'id为{}的记录不存在'.format(tid)
+        context['code'] = 1000
+        context['message'] = 'id为{}的记录不存在'.format(tid)
         return JsonResponse(context)
-    trip.delete()
     return JsonResponse(context)
 
 
@@ -250,32 +268,49 @@ def dispatcher(request):
     :param request:
     :return:json
     """
-    if 'usertype' not in request.session:
-        return JsonResponse({
-            'ret': 302,
-            'msg': '未登录',
-            'redirect': 'sign.html'
-        }, status=302)
+    token = request.GET.get('token')
+    toke_user = jwt_decode_handler(token)
+    user_id = toke_user["user_id"]
+    user = User.objects.get(id=user_id)
+    if user:
+        if Profile.objects.filter(user_id=user_id).exists():
+            profile = Profile.objects.get(user_id=user_id)
 
-    # 将请求参数统一放在request的params属性中，方便后续处理
-    # GET请求 参数在url中，通过request对象的GET属性获取
-    if request.method == 'GET':
-        request.params = request.GET
+            # 将请求参数统一放在request的params属性中，方便后续处理
+            # GET请求 参数在url中，通过request对象的GET属性获取
+            if request.method == 'GET':
+                request.params = request.GET
 
-    # POST/PUT/DELETE 请求 参数从request对象的body属性中获取
-    elif request.method in ['POST', 'PUT', 'DELETE']:
-        # 根据接口，POST/PUT/DELETE 请求的消息体都是 json格式
-        request.params = json.loads(request.body)
+            # POST/PUT/DELETE 请求 参数从request对象的body属性中获取
+            elif request.method in ['POST', 'PUT', 'DELETE']:
+                # 根据接口，POST/PUT/DELETE 请求的消息体都是 json格式
+                request.params = json.loads(request.body)
 
-    # 根据不同的action分派给不同的函数进行处理
-    action = request.params['action']
-    if action == 'list_trip':
-        return list_trip(request)
-    elif action == 'add_trip' and request.session['usertype'] == 'admin':
-        return add_trip(request)
-    elif action == 'modify_trip' and request.session['usertype'] == 'admin':
-        return modify_trip(request)
-    elif action == 'del_trip' and request.session['usertype'] == 'admin':
-        return delete_trip(request)
+            # 根据不同的action分派给不同的函数进行处理
+            action = request.params['action']
+
+            if profile.roles != 'admin':
+                if action == 'list_trip':
+                    return list_trip(request)
+
+            elif profile.roles == 'admin':
+                if action == 'list_trip':
+                    return list_trip(request)
+                elif action == 'add_trip':
+                    return add_trip(request)
+                elif action == 'modify_trip':
+                    return modify_trip(request)
+                elif action == 'del_trip':
+                    return delete_trip(request)
+                else:
+                    return JsonResponse({'ret': 1, 'msg': '不支持该类型http请求'})
+            else:
+                return JsonResponse({
+                    'code': 1000,
+                    'message': "无权修改"
+                })
     else:
-        return JsonResponse({'ret': 1, 'msg': '不支持该类型http请求'})
+        return JsonResponse({
+            'code': 1000,
+            'message': "无权修改"
+        })
