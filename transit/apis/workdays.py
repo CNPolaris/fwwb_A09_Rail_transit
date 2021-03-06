@@ -10,6 +10,9 @@ from rest_framework.utils import json
 from transit.models import Workdays
 # 增加对分页的支持
 from django.core.paginator import Paginator, EmptyPage
+from rest_framework_jwt.serializers import jwt_decode_handler
+from userprofile.models import Profile
+from django.contrib.auth.models import User
 
 _FIELDS = ['date', 'date_class']
 
@@ -23,25 +26,29 @@ def list_workday(request):
     :return:json
     """
     date = request.params.get('date', None)
-    cls = request.params.get('cls', None)
+    cls = request.params.get('date_class', None)
     # 要获取的第几页
     pagenum = request.params.get('page', 1)
-    context = {'ret': 0}
+    pagelimit = request.params.get('limit', 40)
+
+    sort = request.params.get('sort')
+
+    context = {'code': 1000}
     querySet = Workdays.objects.all()
     # 每页要显示的多少条记录
-    pagelimit = 50
     # 主键id在路由中则直接能够查询唯一结果
     if date:
         querySet = querySet.filter(date=date).values()
         if querySet is not None:
             paginator = Paginator(querySet.values(), pagelimit)
             page = paginator.page(pagenum)
-            context['retlist'] = list(page)
+            context['code'] = 2000
+            context['data'] = list(page)
             # total指定一共有多少页数据
             context['total'] = paginator.count
         else:
-            context['ret'] = 1
-            context['msg'] = "不存在日期为{}的记录".format(date)
+            context['code'] = 1000
+            context['message'] = "不存在日期为{}的记录".format(date)
         return JsonResponse(context)
     elif cls:
         try:
@@ -49,27 +56,28 @@ def list_workday(request):
             if querySet is not None:
                 paginator = Paginator(querySet.values(), pagelimit)
                 page = paginator.page(pagenum)
-                context['retlist'] = list(page)
+                context['code'] = 2000
+                context['data'] = list(page)
                 # total指定一共有多少页数据
                 context['total'] = paginator.count
             else:
-                context['ret'] = 1
-                context['msg'] = "不存在节假日属性为{}的记录".format(cls)
+                context['code'] = 1000
+                context['message'] = "不存在节假日属性为{}的记录".format(cls)
         except BaseException as e:
-            print(e)
-            context['ret'] = 1
-            context['msg'] = "通过节假日属性{}查询出现错误".format(cls)
+            context['code'] = 1000
+            context['message'] = "通过节假日属性{}查询出现错误{}".format(cls, e)
         return JsonResponse(context)
     else:
         paginator = Paginator(querySet.values(), pagelimit)
         page = paginator.page(pagenum)
-        context['retlist'] = list(page)
+        context['code'] = 2000
+        context['data'] = list(page)
         # total指定一共有多少页数据
         context['total'] = paginator.count
     return JsonResponse(context)
 
 
-def data_valid(data):
+def data_valid(**kwargs):
     """
     用来代替不能使用表单类的情况下数据的验证器
     :param data:
@@ -77,7 +85,7 @@ def data_valid(data):
     """
     for key in _FIELDS:
         try:
-            if data[key] is None:
+            if kwargs[key] is None:
                 return False
         except BaseException as e:
             print(e)
@@ -93,27 +101,27 @@ def add_workday(request):
     :return: json
     """
     # TODO:还是希望通过表单类来实现数据添加
-    context = {'ret': 0}
-    data = request.params.get("data", None)
-    if data is not None:
-        if data_valid(data) is True:
-            data['date'] = datetime.datetime.strptime(data['date'], "%Y-%m-%d")
-            new_day = Workdays(date=data['date'],
-                               date_class=data['date_class'],
-                               )
+    context = {'code': 1000}
+    date = request.params.get('date', None)
+    date_class = request.params.get('date_class', None)
+    if data_valid(date, date_class) is True:
+        try:
+            date = datetime.datetime.strptime(date, "%Y-%m-%d")
+            new_day = Workdays(date=date,
+                               date_class=date_class)
             try:
                 new_day.save()
-            except BaseException:
-                context['ret'] = 1
-                context['msg'] = '日期为{}的记录已经存在'.format(data['date'])
+                context['code'] = 2000
+            except BaseException as e:
+                context['code'] = 1000
+                context['message'] = '保存失败{}'.format(e)
                 return JsonResponse(context)
-            context['date'] = new_day.date
-        else:
-            context['ret'] = 1
-            context['msg'] = "表单不全"
+        except BaseException as e:
+            context['code'] = 1000
+            context['message'] = '数据格式不正确{}'.format(e)
     else:
-        context['ret'] = 1
-        context['msg'] = "表单不能为空"
+        context['code'] = 1000
+        context['message'] = "表单不全或数据格式不正确"
     return JsonResponse(context)
 
 
@@ -123,22 +131,22 @@ def modify_workday(request):
     :param request: PUT/json
     :return:json
     """
-    context = {'ret': 0}
+    context = {'code': 1000}
     date = request.params['date']
-    newdata = request.params['newdata']
-
+    date_class = request.params.get('date_class', None)
     try:
         workday = Workdays.objects.get(date=date)
-    except BaseException:
-        context['ret'] = 1
-        context['msg'] = '日期为{}的记录不存在'.format(date)
+        if date_class in [1, 2, 3]:
+            workday.date_class = date_class
+            workday.save()
+            context['code'] = 2000
+    except BaseException as e:
+        context['code'] = 1000
+        context['message'] = '日期为{}的记录不存在,出现错误{}'.format(date,e)
         return JsonResponse(context)
-    if newdata['date_class'] in [1, 2, 3]:
-        workday.date_class = newdata['date_class']
     else:
-        context['ret'] = 1
-        context['msg'] = "日期属性{}不合规范".format(newdata['date_class'])
-    workday.save()
+        context['code'] = 1000
+        context['message'] = "日期属性{}不合规范".format(date_class)
     return JsonResponse(context)
 
 
@@ -148,15 +156,16 @@ def delete_workday(request):
     :param request: DELETE/json
     :return: json
     """
-    context = {'ret': 0}
+    context = {'code': 1000}
     date = request.params['date']
     try:
         workday = Workdays.objects.get(date=date)
+        workday.delete()
+        context['code'] = 2000
     except BaseException:
-        context['ret'] = 1
-        context['msg'] = '日期为{}的记录不存在'.format(date)
+        context['code'] = 1000
+        context['message'] = '日期为{}的记录不存在'.format(date)
         return JsonResponse(context)
-    workday.delete()
     return JsonResponse(context)
 
 
@@ -166,32 +175,44 @@ def dispatcher(request):
     :param request:
     :return:json
     """
-    if 'usertype' not in request.session:
-        return JsonResponse({
-            'ret': 302,
-            'msg': '未登录',
-            'redirect': 'sign.html'
-        }, status=302)
+    token = request.GET.get('token')
+    toke_user = jwt_decode_handler(token)
+    user_id = toke_user["user_id"]
+    user = User.objects.get(id=user_id)
 
-    # 将请求参数统一放在request的params属性中，方便后续处理
-    # GET请求 参数在url中，通过request对象的GET属性获取
-    if request.method == 'GET':
-        request.params = request.GET
+    if user:
+        if Profile.objects.filter(user_id=user_id).exists():
+            profile = Profile.objects.get(user_id=user_id)
+            # 将请求参数统一放在request的params属性中，方便后续处理
+            # GET请求 参数在url中，通过request对象的GET属性获取
+            if request.method == 'GET':
+                request.params = request.GET
 
-    # POST/PUT/DELETE 请求 参数从request对象的body属性中获取
-    elif request.method in ['POST', 'PUT', 'DELETE']:
-        # 根据接口，POST/PUT/DELETE 请求的消息体都是 json格式
-        request.params = json.loads(request.body)
+            # POST/PUT/DELETE 请求 参数从request对象的body属性中获取
+            elif request.method in ['POST', 'PUT', 'DELETE']:
+                # 根据接口，POST/PUT/DELETE 请求的消息体都是 json格式
+                request.params = json.loads(request.body)
 
-    # 根据不同的action分派给不同的函数进行处理
-    action = request.params['action']
-    if action == 'list_workday':
-        return list_workday(request)
-    elif action == 'add_workday' and request.session['usertype'] == 'admin':
-        return add_workday(request)
-    elif action == 'modify_workday' and request.session['usertype'] == 'admin':
-        return modify_workday(request)
-    elif action == 'del_workday' and request.session['usertype'] == 'admin':
-        return delete_workday(request)
+            # 根据不同的action分派给不同的函数进行处理
+            action = request.params['action']
+
+            if profile.roles != 'admin':
+                if action == 'list_workday':
+                    return list_workday(request)
+            elif profile.roles == 'admin':
+                if action == 'list_workday':
+                    return list_workday(request)
+                elif action == 'add_workday':
+                    return add_workday(request)
+                elif action == 'modify_workday':
+                    return modify_workday(request)
+                elif action == 'del_workday':
+                    return delete_workday(request)
+                else:
+                    return JsonResponse({'code': 1000, 'message': '不支持该类型http请求'})
+            else:
+                return JsonResponse({'code': 1000, 'message': '无权访问'})
+        else:
+            return JsonResponse({'code': 1000, 'message': '无权访问'})
     else:
-        return JsonResponse({'ret': 1, 'msg': '不支持该类型http请求'})
+        return JsonResponse({'code': 1000, 'message': '无权访问'})

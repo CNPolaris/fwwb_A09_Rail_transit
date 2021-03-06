@@ -141,25 +141,24 @@ def list_trip(request):
     return JsonResponse(context)
 
 
-def data_valid(**kwargs):
+def data_valid(user_id, in_station, in_station_time, out_station, out_station_time, price, channel):
     """
     用来代替不能使用表单类的情况下数据的验证器
-    :param data:
     :return: Bool
     """
-    if kwargs['user_id'] is None:
+    if user_id is None:
         return False
-    if kwargs['in_station'] is None:
+    if in_station is None or not Station.objects.get(station_name=in_station):
         return False
-    if kwargs['in_station_time'] is None:
+    if in_station_time is None:
         return False
-    if kwargs['out_station'] is None:
+    if out_station is None or Station.objects.get(station_name=out_station):
         return False
-    if kwargs['out_station_time'] is None:
+    if out_station_time is None:
         return False
-    if kwargs['channel'] is None:
+    if channel is None or not isinstance(channel, int):
         return False
-    if kwargs['price'] is None:
+    if price is None or not isinstance(price, int):
         return False
     return True
 
@@ -172,7 +171,7 @@ def add_trip(request):
     :return: json
     """
     # TODO:还是希望通过表单类来实现数据添加
-    context = {'code': 2000}
+    context = {'code': 1000}
     # 提取数据
     user_id = request.params.get('user_id_id')
     in_station = request.params.get('in_station', None)
@@ -193,9 +192,10 @@ def add_trip(request):
         try:
             new_trip.user_id = Users.objects.get(user_id=user_id)
             new_trip.save()
-        except BaseException:
+            context['code'] = 2000
+        except BaseException as e:
             context['code'] = 1000
-            context['message'] = 'user_id不存在'
+            context['message'] = 'user_id不存在,出现错误{}'.format(e)
             return JsonResponse(context)
         context['id'] = new_trip.id
     else:
@@ -210,7 +210,7 @@ def modify_trip(request):
     :param request: PUT/json
     :return:json
     """
-    context = {'code': 0}
+    context = {'code': 1000}
     tid = request.params['id']
     # 查找要修改的数据项
     trip = Trips.objects.get(id=tid)
@@ -303,7 +303,7 @@ def dispatcher(request):
                 elif action == 'del_trip':
                     return delete_trip(request)
                 else:
-                    return JsonResponse({'ret': 1, 'msg': '不支持该类型http请求'})
+                    return JsonResponse({'code': 1000, 'message': '不支持该类型http请求'})
             else:
                 return JsonResponse({
                     'code': 1000,

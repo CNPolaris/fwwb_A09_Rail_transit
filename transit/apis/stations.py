@@ -113,7 +113,7 @@ def list_station(request):
     return JsonResponse(context)
 
 
-def data_valid(data):
+def data_valid(**kwargs):
     """
     用来代替不能使用表单类的情况下数据的验证器
     :param data:
@@ -121,7 +121,7 @@ def data_valid(data):
     """
     for key in _FIELDS:
         try:
-            if data[key] is None:
+            if kwargs[key] is None:
                 return False
             else:
                 return True
@@ -139,28 +139,27 @@ def add_station(request):
     :return: json
     """
     # TODO:还是希望通过表单类来实现数据添加
-    context = {'ret': 0}
-    data = request.params.get("data", None)
-    if data is not None:
-        if data_valid(data) is True:
-            new_station = Station(station_id=data['station_id'],
-                                  station_name=data['station_name'],
-                                  station_route=data['station_route'],
-                                  admin_area=data['admin_area'],
-                                  )
-            try:
-                new_station.save()
-            except BaseException:
-                context['ret'] = 1
-                context['msg'] = 'station_id为{}的站点已经存在'.format(data['sid'])
-                return JsonResponse(context)
-            context['id'] = new_station.station_id
-        else:
-            context['ret'] = 1
-            context['msg'] = "表单不全"
+    context = {'code': 1000}
+    # 提取数据
+    station_id = request.params.get('station_id', None)
+    station_name = request.params.get('station_name', None)
+    station_route = request.params.get('station_route', None)
+    admin_area = request.params.get('admin_area', None)
+    if data_valid(station_id, station_route, station_name, admin_area) is True:
+        new_station = Station(station_id=station_id,
+                              station_name=station_name,
+                              station_route=station_route,
+                              admin_area=admin_area
+                              )
+        try:
+            new_station.save()
+            context['code'] = 2000
+        except BaseException as e:
+            context['code'] = 1000
+            context['message'] = 'station_id为{}的站点已经存在，出现错误{}'.format(station_id, e)
     else:
-        context['ret'] = 1
-        context['msg'] = "表单不能为空"
+        context['code'] = 1000
+        context['message'] = "表单不全"
     return JsonResponse(context)
 
 
