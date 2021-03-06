@@ -8,7 +8,6 @@ from django.http import JsonResponse
 from django.contrib.auth import authenticate, login, logout
 from rest_framework.authtoken.models import Token
 from django.contrib.auth.models import User
-from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_jwt.authentication import JSONWebTokenAuthentication
 from rest_framework_jwt.serializers import jwt_decode_handler

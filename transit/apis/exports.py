@@ -4,7 +4,6 @@
 # # @Author  : CNPolaris
 from __future__ import unicode_literals
 
-import json
 
 from django.apps import apps
 from django.http import JsonResponse
