@@ -3,7 +3,7 @@
 # @FileName: urls.py
 # @Author  : CNPolaris
 from django.conf.urls import url, include
-from transit.apis import trips, stations, workdays, users, user_in_out
+from transit.apis import trips, stations, workdays, passenger, user_in_out
 from transit.apis import echarts, exports
 
 echarts_api_urls = [
@@ -49,10 +49,10 @@ workday_urls = [
     url(r'delete', workdays.dispatcher),
 ]
 passenger_url = [
-    url(r'list', users.dispatcher),
-    url(r'create', users.dispatcher),
-    url(r'update', users.dispatcher),
-    url(r'delete', users.dispatcher),
+    url(r'list', passenger.dispatcher),
+    url(r'create', passenger.dispatcher),
+    url(r'update', passenger.dispatcher),
+    url(r'delete', passenger.dispatcher),
 ]
 api_urls = [
     # # 登录登出
@@ -60,10 +60,10 @@ api_urls = [
     # url(r'^logout', user_in_out.user_logout),
     # url(r'^user/info', user_in_out.get_user_info),
     # excel导出
-    url(r'exports', exports.download),
+    url(r'manage/export', exports.dispatcher),
     # model基础数据管理
-    url(r'manager/trip/', include(trip_urls)),
-    url(r'manager/station/', include(station_urls)),
-    url(r'manager/workday/', include(workday_urls)),
-    url(r'manager/passenger/', include(passenger_url))
+    url(r'manage/trip/', include(trip_urls)),
+    url(r'manage/station/', include(station_urls)),
+    url(r'manage/workday/', include(workday_urls)),
+    url(r'manage/passenger/', include(passenger_url))
 ]
