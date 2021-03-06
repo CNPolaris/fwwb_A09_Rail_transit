@@ -1,22 +1,28 @@
-## API接口文档 V1.3.5
 
-### 登陆系统
+
+## API接口文档 V1.4.7
+
+### 前后端数据交互约定
+
+### 用户管理
+
+#### 用户登录
 
 ###### 请求消息
 
 ```http
-POST /signin HTTP/1.1
-Content-Type: application/x-www-form-urlencoded
+POST /api/userprofile/login HTTP/1.1
+Content-Type: application/json
 ```
 
 ###### 请求参数
 
-http请求消息body中参数以格式x-www-form-urlencoded存储
+http请求消息body中参数以格式json存储
 
 需要携带如下参数
 
-- username 用户名
-- password 密码
+- `username` 用户名
+- `password` 密码
 
 ###### 响应消息
 
@@ -33,24 +39,82 @@ http响应消息body中，数据以json格式存储
 
 ```json
 {
-    'ret':0
+    "code":2000,
+    "data":{'token':token}
 }
 ```
 
-ret为0表示登录成功
+- data.token为前后端交互需要使用的令牌
+
+- `code`为2000表示登录成功
 
 如果登录失败，返回登录失败的原因，示例如下
 
 ```json
 {
-    "ret": 1,    
-    "msg":  "用户名或者密码错误"
+    "code": 1000,    
+    "message":  "用户名或者密码错误"
 }
 ```
 
-ret 不为 0 表示登录失败， msg字段描述登录失败的原因
+- `code`为 1000 表示登录失败
+-  `message`字段描述登录失败的原因
 
-### 系统数据API
+#### 用户登出
+
+###### 请求消息
+
+###### 请求参数
+
+###### 响应消息
+
+###### 响应内容
+
+#### 用户信息
+
+##### 获取信息
+
+###### 请求消息
+
+###### 请求参数
+
+###### 响应消息
+
+###### 响应内容
+
+##### 修改信息
+
+###### 请求消息
+
+###### 请求参数
+
+###### 响应消息
+
+###### 响应内容
+
+#### 权限管理
+
+##### 修改权限
+
+###### 请求消息
+
+###### 请求参数
+
+###### 响应消息
+
+###### 响应内容
+
+##### 赋予权限
+
+###### 请求消息
+
+###### 请求参数
+
+###### 响应消息
+
+###### 响应内容
+
+### 数据管理
 
 #### 出行记录
 
@@ -59,7 +123,7 @@ ret 不为 0 表示登录失败， msg字段描述登录失败的原因
 ###### 请求消息
 
 ```http
-GET /api/manager/trips?action=list_trip HTTP/1.1
+GET /api/manage/trip/list?action=list_trip HTTP/1.1
 ```
 
 ###### 请求参数
@@ -69,10 +133,12 @@ http请求消息url中需要携带如下参数，（多参数之间通过&连接
 - action
   
   - 填写值为`list_trip`
-  - url可以携带其他参数如
-    - id\uid\station\date\channel\price
-  
-  - page参数必须携带，否则默认只返回第一页数据
+- token字段必须携带，用于后端验证权限
+- url可以携带其他参数如
+  - id\uid\station\date\channel\price
+- page参数为空时，默认为1
+- limit参数为空时，默认为40
+- sort参数携带用于对数据进行排序的字段 
 
 ###### 响应消息
 
@@ -89,8 +155,8 @@ http响应消息body中，数据以json格式存储，
 
 ```json
 {
-    "ret": 0,
-    "retlist":[
+    "code": 2000,
+    "data":[
         {
             "id": 1,
             "uesr_id": "d4ec5a712f2b24ce226970a8d315dfce",
@@ -99,7 +165,7 @@ http响应消息body中，数据以json格式存储，
             "out_station": "Sta9",
             "out_station_time": "2020-07-15 14:39:29.000000",
             "channel": 3,
-            "pricr": 200
+            "price": 200
         },
         {
             "id": 2,
@@ -109,20 +175,32 @@ http响应消息body中，数据以json格式存储，
             "out_station": "Sta9",
             "out_station_time": "2020-07-15 14:39:29.000000",
             "channel": 3,
-            "pricr": 200
+            "price": 200
         }
     ]
 }
 ```
 
+- `code`为2000表示获取数据成功
 
+如果获取信息失败，返回如下
+
+```json
+{
+    "code": 1000,
+    "message":"获取数据失败"
+}
+```
+
+- `code`为1000表示获取数据失败
+- `message`返回出现错误的原因
 
 ##### 添加一个出行记录
 
 ###### 请求消息
 
 ```http
-POST /api/manager/trips HTTP/1.1
+POST /api/manage/trip/create?action=add_trip HTTP/1.1
 Content-Type: application/json
 ```
 
@@ -134,24 +212,23 @@ http请求消息body携带添加出行记录的信息
 
 ```json
 {
-    "action":"add_trip",
-    "data":{
-        "user_id":"d4ec5a712f2b24ce226970a8d315dfce",
-        "in_station": "Sta18",
-        "in_station_time": "2020-07-15 14:21:58.000000",
-        "out_station": "Sta9",
-        "out_station_time": "2020-07-15 14:39:29.000000",
-        "channel": 3,
-        "price": 200
-    }
+    "token":"1&z5$cpj_x&y7watx4o3ajs&3k9b7*_46i4j%*%qb+7x5m%t6_",
+    "action":"add_trip",   
+    "user_id":"d4ec5a712f2b24ce226970a8d315dfce",
+    "in_station": "Sta18",
+    "in_station_time": "2020-07-15 14:21:58.000000",
+    "out_station": "Sta9",
+    "out_station_time": "2020-07-15 14:39:29.000000",
+    "channel": 3,
+    "price": 200
 }
 ```
 
-**注意**：**action字段固定填写`add_trip`表示添加一个出行记录**
+- token 字段为用户请求数据需要携带的令牌
+- action 字段指明要进行的业务，用于业务转发
+- user_id, in_station,in_station_time,out_station,out_station_time,channel,price等为要增加的数据项的内容
 
-**data字段中存储了要添加的出行记录的信息**
-
-服务端在接受到该请求后，应当在验证权限后在系统中添加这样一条记录
+服务端在接受到该请求后，应当在验证权限、确认数据格式正确后在系统中添加这样一条记录
 
 ###### 响应消息
 
@@ -168,32 +245,30 @@ http响应消息在body中，数据以json格式存储，
 
 ```json
 {
-	"ret":0,
-	"id":188
+	"code":2000
 }
 ```
 
-`ret`为0表示添加成功
-
-`id`为添加记录的id号
+- `code`为2000表示添加成功
 
 如果添加失败，返回失败的原因，示例如下
 
 ```json
 {
-    "ret":1,
-    "msg":"该记录已经存在"
+    "code":1000,
+    "message":"该记录已经存在"
 }
 ```
 
-`ret`不为0表示失败，`msg`字段描述添加失败的原因
+- `code`为1000表示失败
+- `message`字段描述添加失败的原因
 
 ##### 修改一个出行记录
 
 ###### 请求消息
 
 ```http
-PUT /api/manager/trips HTTP/1.1
+PUT /api/manage/trip/update HTTP/1.1
 Content-Type: application/json
 ```
 
@@ -205,27 +280,22 @@ http请求消息body携带修改客户的信息
 
 ```json
 {
+    "token":"1&z5$cpj_x&y7watx4o3ajs&3k9b7*_46i4j%*%qb+7x5m%t6_",
     "action":"modify_trip",
     "id":6,
-    "newdata":{
-        "user_id":"d4ec5a712f2b24ce226970a8d315dfce",
-        "in_station": "Sta18",
-        "in_station_time": "2020-07-15 14:21:58.000000",
-        "out_station": "Sta9",
-        "out_station_time": "2020-07-15 14:39:29.000000",
-        "channel": 3,
-        "pricr": 200
-    }
+    "user_id":"d4ec5a712f2b24ce226970a8d315dfce",
+    "in_station": "Sta18",
+    "in_station_time": "2020-07-15 14:21:58.000000",
+    "out_station": "Sta9",
+    "out_station_time": "2020-07-15 14:39:29.000000",
+    "channel": 3,
+    "price": 200
 }
 ```
 
-**注意：**action字段固定填写modify_trip表示修改一条出行记录的信息
-
-id字段为要修改的记录的id号
-
-newdata字段中存储了修改后的出行记录的信息
-
-服务端在接受到该请求后，应该在系统中添加一条这样的信息
+- token 字段为用户请求数据需要携带的令牌
+- action 字段指明要进行的业务，用于业务转发
+- user_id, in_station,in_station_time,out_station,out_station_time,channel,price等为要修改的数据项的内容
 
 ###### 响应消息
 
@@ -242,29 +312,30 @@ http响应消息body中，数据以json格式存储
 
 ```json
 {
-    "ret":0
+    "code":2000
 }
 ```
 
-`ret`为0表示成功
+- `code`为2000表示成功
 
 如果修改失败，返回失败的原因，示例如下
 
 ```json
 {
-    "ret":1,
-    "msg":"数据不全"
+    "code":1000,
+    "message":"数据不全"
 }
 ```
 
-`ret`不为0表示失败,`msg`字段描述添加失败的原因
+- `code`为1000表示失败
+- `message`字段描述添加失败的原因
 
 ##### 删除一个出行记录
 
 ###### 请求消息
 
 ```http
-DELETE /api/manager/trips HTTP/1.1
+DELETE /api/manage/trip/delete HTTP/1.1
 Content-Type: application/json
 ```
 
@@ -276,16 +347,15 @@ http 请求消息body携带要删除记录的id
 
 ```json
 {
+    "token":"1&z5$cpj_x&y7watx4o3ajs&3k9b7*_46i4j%*%qb+7x5m%t6_",
     "action":"del_trip",
     "id":888
 }
 ```
 
-**注意**：action字段固定填写del_trip表示删除一条记录
-
-id字段为要删除的记录id号
-
-服务端在接受到该请求后，应该在系统中尝试删除该id对应的记录。
+- token 字段为用户请求数据需要携带的令牌
+- action 字段固定填写del_trip表示删除一条记录，用于业务转发
+- id字段为要删除的记录id号
 
 ###### 响应消息
 
@@ -302,22 +372,23 @@ http响应消息body中，数据以json格式存储，
 
 ```json
 {
-    "ret":0
+    "code":2000
 }
 ```
 
-`ret`为0表示成功
+- `code`为2000表示成功
 
 如果删除失败，返回失败的原因，示例如下
 
 ```json
 {
-    "ret":1,
-    "msg":"id为888的记录不存在"
+    "code":1000,
+    "message":"id为888的记录不存在"
 }
 ```
 
-`ret`不为0表示失败，`msg`字段描述添加失败的原因
+- `code`为1000表示失败
+- `message`字段描述添加失败的原因
 
 #### 站点信息
 
@@ -326,16 +397,16 @@ http响应消息body中，数据以json格式存储，
 ###### 请求消息
 
 ```http
-GET /api/manager/station?action=list_station HTTP/1.1
+GET /api/manage/station/list HTTP/1.1
 ```
 
 ###### 请求参数
 
 http请求消息url中需要携带如下参数，
 
-- action
-  - 填写值为list_station
-- 可以携带sid\name\route\area等参数
+- action为list_station,表明是列出所有的站点信息，用于业务转发
+- token 用于权限验证的令牌
+- 可以携带station_id\station_name\station_route\admin_area等参数
 
 ###### 响应消息
 
@@ -352,8 +423,8 @@ http响应消息body中，数据以json格式存储，
 
 ```json
 {
-    "ret": 0,
-    "retlist":[
+    "code": 2000,
+    "data":[
         {
             "station_id": 1004,
             "station_name": "Sta18",
@@ -370,14 +441,12 @@ http响应消息body中，数据以json格式存储，
 }
 ```
 
-
-
 ##### 添加一个站点
 
 ###### 请求消息
 
 ```http
-POST /api/manager/station HTTP/1.1
+POST /api/manage/station/create HTTP/1.1
 Content-Type: application/json
 ```
 
@@ -389,21 +458,19 @@ http请求消息body携带添加出行记录的信息
 
 ```json
 {
+    "token":"1&z5$cpj_x&y7watx4o3ajs&3k9b7*_46i4j%*%qb+7x5m%t6_",
     "action":"add_station",
-    "data":{
-        "station_id": 1006,
-        "station_name": "Sta159",
-        "station_route": "1号线",
-        "admin_area":"Dist1"
-    }
+    "station_id": 1006,
+    "station_name": "Sta159",
+    "station_route": "1号线",
+    "admin_area":"Dist1"
 }
 ```
 
-**注意**：**action字段固定填写`add_station`表示添加一个出行记录**
+- token 为用于权限验证的令牌
+- action字段固定填写`add_station`表示添加一个出行记录,用于业务转发
 
-**data字段中存储了要添加的站点的信息**
-
-服务端在接受到该请求后，应当在验证权限后在系统中添加这样一条记录
+- 其余字段中存储了要添加的站点的信息
 
 ###### 响应消息
 
@@ -420,32 +487,30 @@ http响应消息在body中，数据以json格式存储，
 
 ```json
 {
-	"ret":0,
-	"id":188
+	"code":2000
 }
 ```
 
-`ret`为0表示添加成功
-
-`id`为添加记录的id号
+- `code`为2000表示添加成功
 
 如果添加失败，返回失败的原因，示例如下
 
 ```json
 {
-    "ret":1,
-    "msg":"该记录已经存在"
+    "code":1000,
+    "message":"该记录已经存在"
 }
 ```
 
-`ret`不为0表示失败，`msg`字段描述添加失败的原因
+- `ret`为1000表示失败
+- `message`字段描述添加失败的原因
 
 ##### 修改一个站点信息
 
 ###### 请求消息
 
 ```http
-PUT /api/manager/station HTTP/1.1
+PUT /api/manage/station/update HTTP/1.1
 Content-Type: application/json
 ```
 
@@ -457,24 +522,21 @@ http请求消息body携带修改客户的信息
 
 ```json
 {
+    "token":"1&z5$cpj_x&y7watx4o3ajs&3k9b7*_46i4j%*%qb+7x5m%t6_",
     "action":"modify_station",
-    "sid":6,
-    "newdata":{
-        "station_id": 1006,
-        "station_name": "Sta159",
-        "station_route": "1号线",
-        "admin_area":"Dist1"
-    }
+    "station_id": 1006,
+    "station_name": "Sta159",
+    "station_route": "1号线",
+    "admin_area":"Dist1"
 }
 ```
 
-**注意：**action字段固定填写modify_station表示修改一条出行记录的信息
+- token 为用于权限验证的令牌
+- action字段固定填写modify_station表示修改一条出行记录的信息
 
-sid字段为要修改的记录的id号
+- station_id字段为要修改的记录的id号
 
-newdata字段中存储了修改后的站点的信息
-
-服务端在接受到该请求后，应该在系统中添加一条这样的信息
+- 其余字段中存储了修改后的站点的信息
 
 ###### 响应消息
 
@@ -491,29 +553,30 @@ http响应消息body中，数据以json格式存储
 
 ```json
 {
-    "ret":0
+    "code":2000
 }
 ```
 
-`ret`为0表示成功
+- `code`为2000表示修改成功成功
 
 如果修改失败，返回失败的原因，示例如下
 
 ```json
 {
-    "ret":1,
-    "msg":"数据不全"
+    "code":1000,
+    "message":"数据不全"
 }
 ```
 
-`ret`不为0表示失败,`msg`字段描述添加失败的原因
+- `code`为1000表示失败
+- `message`字段描述添加失败的原因
 
 ##### 删除一个站点信息
 
 ###### 请求消息
 
 ```http
-DELETE /api/manager/station HTTP/1.1
+DELETE /api/manage/station/delete HTTP/1.1
 Content-Type: application/json
 ```
 
@@ -525,16 +588,15 @@ http 请求消息body携带要删除记录的id
 
 ```json
 {
+    "token":"1&z5$cpj_x&y7watx4o3ajs&3k9b7*_46i4j%*%qb+7x5m%t6_",
     "action":"del_station",
-    "sid":888
+    "station_id":888
 }
 ```
 
-**注意**：action字段固定填写del_station表示删除一条记录
-
-id字段为要删除的记录id号
-
-服务端在接受到该请求后，应该在系统中尝试删除该id对应的记录。
+- token 为用于权限验证的令牌
+- action字段固定填写del_station表示删除一条记录
+- station_id字段为要删除的站点的id
 
 ###### 响应消息
 
@@ -551,22 +613,23 @@ http响应消息body中，数据以json格式存储，
 
 ```json
 {
-    "ret":0
+    "code":2000
 }
 ```
 
-`ret`为0表示成功
+- `code`为2000表示删除成功
 
 如果删除失败，返回失败的原因，示例如下
 
 ```json
 {
-    "ret":1,
-    "msg":"id为888的记录不存在"
+    "code":1000,
+    "message":"id为888的记录不存在"
 }
 ```
 
-`ret`不为0表示失败，`msg`字段描述添加失败的原因
+- `code`为1000表示失败
+- `message`字段描述添加失败的原因
 
 #### 工作日信息
 
@@ -575,7 +638,7 @@ http响应消息body中，数据以json格式存储，
 ###### 请求消息
 
 ```http
-GET /api/manager/workday?action=list_workday HTTP/1.1
+GET /api/manage/workday/list?action=list_workday HTTP/1.1
 ```
 
 ###### 请求参数
@@ -584,6 +647,7 @@ http请求消息url中需要携带如下参数，
 
 - action
   - 填写值为list_workday
+- token 用于权限验证的令牌
 - 可以携带date\cls参数
 
 ###### 响应消息
@@ -601,8 +665,8 @@ http响应消息body中，数据以json格式存储，
 
 ```json
 {
-    "ret": 0,
-    "retlist":[
+    "code": 2000,
+    "data":[
         {
 			"date":"2019-12-31",
             "date_class":3
@@ -615,12 +679,21 @@ http响应消息body中，数据以json格式存储，
 }
 ```
 
+如果获取数据失败，返回如下
+
+```json
+{
+    "code":1000,
+    "message":"获取失败的原因"
+}
+```
+
 ##### 添加一个工作日信息
 
 ###### 请求消息
 
 ```http
-POST /api/manager/workday HTTP/1.1
+POST /api/manage/workday/create HTTP/1.1
 Content-Type: application/json
 ```
 
@@ -632,17 +705,17 @@ http请求消息body携带添加出行记录的信息
 
 ```json
 {
+    "token":"1&z5$cpj_x&y7watx4o3ajs&3k9b7*_46i4j%*%qb+7x5m%t6_",
     "action":"add_workday",
-    "data":{
-        "date":"2019-12-31",
-        "date_class":3
-    }
+    "date":"2019-12-31",
+    "date_class":3
 }
 ```
 
-**注意**：**action字段固定填写`add_workday`表示添加一个出行记录**
+- token 用于权限验证的令牌
+- action字段固定填写`add_workday`表示添加一个出行记录
 
-**data字段中存储了要添加的出行记录的信息**
+- 其他字段中存储了要添加的出行记录的信息
 
 服务端在接受到该请求后，应当在验证权限后在系统中添加这样一条记录
 
@@ -659,37 +732,32 @@ http响应消息在body中，数据以json格式存储，
 
 如果添加成功，返回如下
 
-```http
+```json
 {
-	"ret":0,
-	"date":"2020-01-01",
-	"date_class":1
+	"code":2000
 }
 ```
 
-`ret`为0表示添加成功
-
-`date`为添加的日期
-
-`date_class`为添加的日期的属性
+- `code`为2000表示添加成功
 
 如果添加失败，返回失败的原因，示例如下
 
 ```json
 {
-    "ret":1,
-    "msg":"该记录已经存在"
+    "code":1000,
+    "message":"该记录已经存在"
 }
 ```
 
-`ret`不为0表示失败，`msg`字段描述添加失败的原因
+- `code`为1000表示失败
+- `message`字段描述添加失败的原因
 
 ##### 修改一个工作日记录
 
 ###### 请求消息
 
 ```http
-PUT /api/manager/workday HTTP/1.1
+PUT /api/manage/workday/update HTTP/1.1
 Content-Type: application/json
 ```
 
@@ -701,21 +769,20 @@ http请求消息body携带修改客户的信息
 
 ```json
 {
+    "token":"1&z5$cpj_x&y7watx4o3ajs&3k9b7*_46i4j%*%qb+7x5m%t6_",
     "action":"modify_workday",
     "date":"2020-01-01",
-    "newdata":{
 	"date_class":1
-    }
 }
 ```
 
-**注意：**action字段固定填写modify_workday表示修改一条出行记录的信息
+- token 用于权限验证的令牌
 
-id字段为要修改的记录的日期
+- action字段固定填写modify_workday表示修改一条出行记录的信息
 
-newdata字段中存储了修改后的信息
+- date字段为要修改的记录的日期
 
-服务端在接受到该请求后，应该在系统中添加一条这样的信息
+- date_class字段中存储了修改后的信息
 
 ###### 响应消息
 
@@ -732,29 +799,30 @@ http响应消息body中，数据以json格式存储
 
 ```json
 {
-    "ret":0
+    "code":2000
 }
 ```
 
-`ret`为0表示成功
+- `code`为2000表示成功
 
 如果修改失败，返回失败的原因，示例如下
 
 ```json
 {
-    "ret":1,
-    "msg":"数据不全"
+    "code":1000,
+    "message":"数据不全"
 }
 ```
 
-`ret`不为0表示失败,`msg`字段描述添加失败的原因
+- `code`为1000表示失败
+- `message`字段描述添加失败的原因
 
 ##### 删除一个工作日记录
 
 ###### 请求消息
 
 ```http
-DELETE /api/manager/workday HTTP/1.1
+DELETE /api/manage/workday/delete HTTP/1.1
 Content-Type: application/json
 ```
 
@@ -766,16 +834,16 @@ http 请求消息body携带要删除记录的id
 
 ```json
 {
+    "token":"1&z5$cpj_x&y7watx4o3ajs&3k9b7*_46i4j%*%qb+7x5m%t6_",
     "action":"del_workday",
     "date":"2020-01-01"
 }
 ```
 
-**注意**：action字段固定填写del_workday表示删除一条记录
+- token 用于权限验证的令牌
+- action字段固定填写del_workday表示删除一条记录
 
-id字段为要删除的记录的日期
-
-服务端在接受到该请求后，应该在系统中尝试删除该id对应的记录。
+- date字段为要删除的记录的日期
 
 ###### 响应消息
 
@@ -792,22 +860,23 @@ http响应消息body中，数据以json格式存储，
 
 ```json
 {
-    "ret":0
+    "code":2000
 }
 ```
 
-`ret`为0表示成功
+- `code`为2000表示成功
 
 如果删除失败，返回失败的原因，示例如下
 
 ```json
 {
-    "ret":1,
-    "msg":"id为2020-01-01,的记录不存在"
+    "code":1000,
+    "message":"id为2020-01-01,的记录不存在"
 }
 ```
 
-`ret`不为0表示失败，`msg`字段描述添加失败的原因
+- `code`不为0表示失败
+- `message`字段描述添加失败的原因
 
 #### 乘客信息
 
@@ -816,7 +885,7 @@ http响应消息body中，数据以json格式存储，
 ###### 请求消息
 
 ```http
-GET /api/manager/passager?action=list_passager HTTP/1.1
+GET /api/manage/passenger?action=list_passenger HTTP/1.1
 ```
 
 ###### 请求参数
@@ -824,7 +893,9 @@ GET /api/manager/passager?action=list_passager HTTP/1.1
 http请求消息url中需要携带如下参数，
 
 - action
-  - 填写值为list_passager
+  - 填写值为list_passenger
+- token 用于权限验证的令牌
+- 可以携带其他参数如passenger_id.dist,birth,gender
 
 ###### 响应消息
 
@@ -841,8 +912,8 @@ http响应消息body中，数据以json格式存储，
 
 ```json
 {
-    "ret": 0,
-    "retlist":[
+    "code": 2000,
+    "data":[
         {
             "uesr_id": "d4ec5a712f2b24ce226970a8d315dfce",
             "dist": 5105,
@@ -859,14 +930,12 @@ http响应消息body中，数据以json格式存储，
 }
 ```
 
-
-
 ##### 添加一个乘客信息记录
 
 ###### 请求消息
 
 ```http
-POST /api/manager/passager HTTP/1.1
+POST /api/manager/passenger/create HTTP/1.1
 Content-Type: application/json
 ```
 
@@ -878,21 +947,20 @@ http请求消息body携带添加乘客的信息
 
 ```json
 {
-    "action":"add_passager",
-    "data":{
-            "uesr_id": "d4ec5a712f2b24ce226970a8d315dfce",
-            "dist": 5105,
-            "brith": 1987,
-            "gender": 1,
-    }
+    "token":"1&z5$cpj_x&y7watx4o3ajs&3k9b7*_46i4j%*%qb+7x5m%t6_",
+    "action":"add_passenger",
+    "passenger_id": "d4ec5a712f2b24ce226970a8d315dfce",
+    "dist": 5105,
+    "brith": 1987,
+    "gender": 1,
 }
 ```
 
-**注意**：**action字段固定填写`add_passager`表示添加一个乘客信息记录
+- token 用于权限验证的令牌
 
-**data字段中存储了要添加的乘客的信息**
+- action字段固定填写`add_passager`表示添加一个乘客信息记录
 
-服务端在接受到该请求后，应当在验证权限后在系统中添加这样一条记录
+- 其他字段中存储了要添加的乘客的信息
 
 ###### 响应消息
 
@@ -909,32 +977,30 @@ http响应消息在body中，数据以json格式存储，
 
 ```json
 {
-	"ret":0,
-	"id":188
+	"code":2000
 }
 ```
 
-`ret`为0表示添加成功
-
-`id`为添加的乘客的id
+- `code`为2000表示添加成功
 
 如果添加失败，返回失败的原因，示例如下
 
 ```json
 {
-    "ret":1,
-    "msg":"该记录已经存在"
+    "code":1000,
+    "message":"该记录已经存在"
 }
 ```
 
-`ret`不为0表示失败，`msg`字段描述添加失败的原因
+- `code`为1000表示失败，
+- `message`字段描述添加失败的原因
 
 ##### 修改一位乘客记录
 
 ###### 请求消息
 
 ```http
-PUT /api/manager/passager HTTP/1.1
+PUT /api/manage/passenger/update HTTP/1.1
 Content-Type: application/json
 ```
 
@@ -946,21 +1012,21 @@ http请求消息body携带修改乘客的信息
 
 ```json
 {
+    "token":"1&z5$cpj_x&y7watx4o3ajs&3k9b7*_46i4j%*%qb+7x5m%t6_",
     "action":"modify_trip",
-    "id":"d4ec5a712f2b24ce226970a8d315dfce",
-    "newdata":{
-            "dist": 5105,
-            "brith": 1987,
-            "gender": 1,
-    }
+    "passenger_id":"d4ec5a712f2b24ce226970a8d315dfce",
+    "dist": 5105,
+    "brith": 1987,
+    "gender": 1,
 }
 ```
 
-**注意：**action字段固定填写modify_passager表示修改乘客的信息
+- token 用于权限验证的令牌
+- action字段固定填写modify_passager表示修改乘客的信息
 
-id字段为要修改的乘客的id号
+- passenger_id字段为要修改的乘客的id号
 
-newdata字段中存储了修改后的乘客的信息
+- 其他字段中存储了修改后的乘客的信息
 
 服务端在接受到该请求后，应该在系统中添加一条这样的信息
 
@@ -979,29 +1045,30 @@ http响应消息body中，数据以json格式存储
 
 ```json
 {
-    "ret":0
+    "code":2000
 }
 ```
 
-`ret`为0表示成功
+- `code`为2000表示成功
 
 如果修改失败，返回失败的原因，示例如下
 
 ```json
 {
-    "ret":1,
-    "msg":"格式不对"
+    "code":1000,
+    "message":"格式不对"
 }
 ```
 
-`ret`不为0表示失败,`msg`字段描述添加失败的原因
+- `code`为1000表示失败
+- `message`字段描述添加失败的原因
 
 ##### 删除一条乘客记录
 
 ###### 请求消息
 
 ```http
-DELETE /api/manager/passager HTTP/1.1
+DELETE /api/manage/passenger/delete HTTP/1.1
 Content-Type: application/json
 ```
 
@@ -1013,14 +1080,17 @@ http 请求消息body携带要删除记录的id
 
 ```json
 {
-    "action":"del_passager",
-    "id":"d4ec5a712f2b24ce226970a8d315dfce"
+    "token":"1&z5$cpj_x&y7watx4o3ajs&3k9b7*_46i4j%*%qb+7x5m%t6_",
+    "action":"del_passenger",
+    "passenger_id":"d4ec5a712f2b24ce226970a8d315dfce"
 }
 ```
 
-**注意**：action字段固定填写del_passager表示删除一条记录
+- token 用于权限验证的令牌
 
-id字段为要删除的记录id号
+- action字段固定填写del_passenger表示删除一条记录
+
+- passenger_id字段为要删除的记录id号
 
 服务端在接受到该请求后，应该在系统中尝试删除该id对应的记录。
 
@@ -1039,22 +1109,23 @@ http响应消息body中，数据以json格式存储，
 
 ```json
 {
-    "ret":0
+    "code":2000
 }
 ```
 
-`ret`为0表示成功
+- `code`为2000表示成功
 
 如果删除失败，返回失败的原因，示例如下
 
 ```json
 {
-    "ret":1,
-    "msg":"id为d4ec5a712f2b24ce226970a8d315dfce的记录不存在"
+    "code":1000,
+    "message":"id为d4ec5a712f2b24ce226970a8d315dfce的记录不存在"
 }
 ```
 
-`ret`不为0表示失败，`msg`字段描述添加失败的原因
+- `code`为1000表示失败
+-  `message`字段描述添加失败的原因
 
 ### Echarts数据API
 
