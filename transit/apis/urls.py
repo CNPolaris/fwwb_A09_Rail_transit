@@ -12,7 +12,7 @@ echarts_api_urls = [
     # 单日客流量
     url(r'^echarts/daily', echarts.get_daily_flow),
     # 用户年龄结构
-    url('echarts/agestruct', echarts.get_age_struct),
+    url('charts/passenger/age', echarts.get_age_struct),
     # 实时客流数据
     url(r'^echarts/realtime', echarts.real_time_dispatcher),
     # 站点的OD客流分析

@@ -11,6 +11,9 @@ from django.db.models import Count, Q
 from django.http import JsonResponse
 import datetime
 import pandas as pd
+from rest_framework_jwt.serializers import jwt_decode_handler
+from django.contrib.auth.models import User
+from userprofile.models import Profile
 
 """
 向echarts绘制图形提供数据集的api
@@ -156,57 +159,100 @@ def get_daily_flow(request):
 def get_age_struct(request):
     """
     用户年龄结构分析
-    :param request:GET /api/echarts/agestruct?action=age_struct
+    :param request:GET /api/charts/passenger/age?action=age_struct
     :return: Json
     age: 用户年龄的分组
     count: 不同年龄段的用户数量
     """
-    if 'usertype' not in request.session:
-        return JsonResponse({
-            'ret': 302,
-            'msg': '未登录',
-            'redirect': 'sign.html'
-        }, status=302)
+    # if 'usertype' not in request.session:
+    #     return JsonResponse({
+    #         'ret': 302,
+    #         'msg': '未登录',
+    #         'redirect': 'sign.html'
+    #     }, status=302)
+    token = request.GET.get('token')
+    toke_user = jwt_decode_handler(token)
+    user_id = toke_user["user_id"]
+    user = User.objects.get(id=user_id)
 
-    if request.method == 'GET':
-        request.params = request.GET
-        action = request.params.get('action', None)
-        if action is not None and action == 'age_struct':
-            context = {'ret': 0}
-            User_list = Users.objects.values_list('birth').annotate(Count("user_id"))
-            # 记录不同年龄段的个数
-            count = [0, 0, 0, 0, 0]
-            stage = ["0-6", "7-17", "18-40", "41-65", "66+"]
-            # 获取互联网时间的年份
-            This_year = datetime.date.today().year
-            if User_list:
-                for line in User_list:
-                    # 当前的日期减去用户的出生年
-                    age = This_year - line[0]
-                    if 0 <= age < 7:
-                        count[0] = count[0] + line[1]
-                    elif 7 <= age < 18:
-                        count[1] = count[1] + line[1]
-                    elif 18 <= age < 41:
-                        count[2] = count[2] + line[1]
-                    elif 41 <= age < 66:
-                        count[3] = count[3] + line[1]
-                    elif 66 <= age:
-                        count[4] = count[4] + line[1]
-            else:
-                context['ret'] = 1
-                context['msg'] = "年龄组成结构查询结果为空"
-                return JsonResponse(context)
-            data = []
-            for s, c in zip(stage, count):
-                data.append({'name': s, 'value': c})
-            # 向前端返回的数据
-            context['data'] = data
-            context['name'] = stage
+    if user and Profile.objects.filter(user_id=user_id).exists():
+        context = {'code': 2000}
+        User_list = Users.objects.values_list('birth').annotate(Count("user_id"))
+        # 记录不同年龄段的个数
+        count = [0, 0, 0, 0, 0]
+        stage = ["0-6", "7-17", "18-40", "41-65", "66+"]
+        # 获取互联网时间的年份
+        This_year = datetime.date.today().year
+        if User_list:
+            for line in User_list:
+                # 当前的日期减去用户的出生年
+                age = This_year - line[0]
+                if 0 <= age < 7:
+                    count[0] = count[0] + line[1]
+                elif 7 <= age < 18:
+                    count[1] = count[1] + line[1]
+                elif 18 <= age < 41:
+                    count[2] = count[2] + line[1]
+                elif 41 <= age < 66:
+                    count[3] = count[3] + line[1]
+                elif 66 <= age:
+                    count[4] = count[4] + line[1]
+        else:
+            context['code'] = 1000
+            context['message'] = "年龄组成结构查询结果为空"
             return JsonResponse(context)
-        return JsonResponse({'ret': 1, 'msg': '不支持该类型http请求'})
+        data = []
+        for s, c in zip(stage, count):
+            data.append({'name': s, 'value': c})
+        # 向前端返回的数据
+        context['code'] = 2000
+        context['data'] = data
+        context['name'] = stage
+        return JsonResponse(context)
+
     else:
-        return JsonResponse({'ret': 1, 'msg': '不支持该类型http请求'})
+        return JsonResponse({'code': 1000, 'message': '未登录用户无访问权限'})
+
+
+# if request.method == 'GET':
+#         request.params = request.GET
+#         action = request.params.get('action', None)
+#         if action is not None and action == 'age_struct':
+#             context = {'ret': 0}
+#             User_list = Users.objects.values_list('birth').annotate(Count("user_id"))
+#             # 记录不同年龄段的个数
+#             count = [0, 0, 0, 0, 0]
+#             stage = ["0-6", "7-17", "18-40", "41-65", "66+"]
+#             # 获取互联网时间的年份
+#             This_year = datetime.date.today().year
+#             if User_list:
+#                 for line in User_list:
+#                     # 当前的日期减去用户的出生年
+#                     age = This_year - line[0]
+#                     if 0 <= age < 7:
+#                         count[0] = count[0] + line[1]
+#                     elif 7 <= age < 18:
+#                         count[1] = count[1] + line[1]
+#                     elif 18 <= age < 41:
+#                         count[2] = count[2] + line[1]
+#                     elif 41 <= age < 66:
+#                         count[3] = count[3] + line[1]
+#                     elif 66 <= age:
+#                         count[4] = count[4] + line[1]
+#             else:
+#                 context['ret'] = 1
+#                 context['msg'] = "年龄组成结构查询结果为空"
+#                 return JsonResponse(context)
+#             data = []
+#             for s, c in zip(stage, count):
+#                 data.append({'name': s, 'value': c})
+#             # 向前端返回的数据
+#             context['data'] = data
+#             context['name'] = stage
+#             return JsonResponse(context)
+#         return JsonResponse({'ret': 1, 'msg': '不支持该类型http请求'})
+#     else:
+#         return JsonResponse({'ret': 1, 'msg': '不支持该类型http请求'})
 
 
 @csrf_exempt

@@ -59,7 +59,7 @@ def user_login(request):
 
 def user_logout(request):
     logout(request)
-    return JsonResponse({'ret': 2000})
+    return JsonResponse({'code': 2000})
 
 
 def get_user_info(request):
