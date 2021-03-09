@@ -28,7 +28,7 @@ def list_trip(request):
     :return:json
     """
     id = request.GET.get('id', None)
-    uid = request.params.get('uid', None)
+    uid = request.params.get('user_id', None)
     station = request.params.get('station', None)
     date = request.params.get('date', None)
     chan = request.params.get('channel', None)
