@@ -4,6 +4,7 @@
 # @Author  : CNPolaris
 import calendar
 import json
+import time
 
 from transit.models import Trips, Users, Workdays, Station, TripStatistics
 from django.views.decorators.csrf import csrf_exempt
@@ -19,7 +20,7 @@ from userprofile.models import Profile
 向echarts绘制图形提供数据集的api
 """
 TIME_LIST = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
-                   16, 17, 18, 19, 20, 21, 22, 23]
+             16, 17, 18, 19, 20, 21, 22, 23]
 
 
 def monthly_flow(request):
@@ -432,8 +433,8 @@ def station_of_point(request):
                                                 out_station_time__contains=date).values('out_station_time')
         in_dict = pd.value_counts([int(i['in_station_time'].strftime('%H')) for i in Sta_in_querySet]).to_dict()
         out_dict = pd.value_counts([int(i['out_station_time'].strftime('%H')) for i in Sta_out_querySet]).to_dict()
-        context['in_list'] = [{'hour': i, 'count': in_dict[i]}for i in TIME_LIST if i in in_dict]
-        context['out_list'] = [{'hour': i, 'count': out_dict[i]}for i in TIME_LIST if i in out_dict]
+        context['in_list'] = [{'hour': i, 'count': in_dict[i]} for i in TIME_LIST if i in in_dict]
+        context['out_list'] = [{'hour': i, 'count': out_dict[i]} for i in TIME_LIST if i in out_dict]
 
     else:
         context['ret'] = 1
@@ -515,3 +516,111 @@ def get_OD_station(request, **kwargs):
             return JsonResponse({'ret': 1, 'msg': "不支持该类型的http访问"})
     else:
         return JsonResponse({'ret': 1, 'msg': "不支持该类型的http访问"})
+
+
+def verify_permissions(request):
+    token = request.GET.get('token')
+    toke_user = jwt_decode_handler(token)
+    user_id = toke_user["user_id"]
+    user = User.objects.get(id=user_id)
+
+    if user:
+        if Profile.objects.filter(user_id=user_id).exists():
+            profile = Profile.objects.get(user_id=user_id)
+            # 将请求参数统一放在request的params属性中，方便后续处理
+            # GET请求 参数在url中，通过request对象的GET属性获取
+            if request.method == 'GET':
+                request.params = request.GET
+            return True, request
+    else:
+        return True, request
+
+
+def get_route_section(request):
+    """
+    获取时间端内的指定线路的各站点的断面客流
+    :param request: GET /api/charts/route/section
+    :return: json
+    目标数据图 https://echarts.apache.org/examples/zh/editor.html?c=bar-brush
+    """
+    # 验证权限
+    flag, request = verify_permissions(request)
+    # 存储返回数据
+    context = {}
+    tripSet = Trips.objects.all()
+    if flag:
+        # 获取指定的线路
+        route = request.params.get('route', None)
+        date = request.params.get('date', None)
+        if route and not date:
+            route = '{}号线'.format(route)
+            station_list = Station.objects.filter(station_route=route).values('station_name')
+            station_list = [i['station_name'] for i in station_list]
+            context['station'] = station_list
+
+            station_dict = dict(zip(station_list, [0] * len(station_list)))
+            tripSet = tripSet.filter(Q(in_station__in=station_list) | Q(out_station__in=station_list)).values(
+                'in_station', 'out_station')
+
+            context['code'] = 2000
+
+            in_list = station_dict
+            in_dict = pd.value_counts([i['in_station'] for i in tripSet]).to_dict()
+
+            out_list = station_dict
+            out_dict = pd.value_counts([i['out_station'] for i in tripSet]).to_dict()
+
+            for s in station_dict.keys():
+                if s in in_dict.keys():
+                    in_list[s] = in_dict[s]
+
+                if s in out_dict.keys():
+                    out_list[s] = out_dict[s]
+
+            in_list = list(in_list.values())
+            out_list = list(out_list.values())
+
+            context['in_list'] = in_list
+            context['out_list'] = out_list
+
+        elif route and date:
+            route = '{}号线'.format(route)
+
+            station_list = Station.objects.filter(station_route=route).values('station_name')
+            station_list = [i['station_name'] for i in station_list]
+            context['station'] = station_list
+            station_dict = dict(zip(station_list, [0] * len(station_list)))
+
+            trip_querySet = tripSet.filter(Q(in_station__in=station_list) | Q(out_station__in=station_list),
+                                           Q(in_station_time__contains=date) | Q(
+                                               out_station_time__contains=date)).values('in_station', 'out_station')
+
+            context['code'] = 2000
+
+            in_list = station_dict
+            in_dict = pd.value_counts([i['in_station'] for i in trip_querySet]).to_dict()
+
+            out_list = station_dict
+            out_dict = pd.value_counts([i['out_station'] for i in trip_querySet]).to_dict()
+
+            for s in station_dict.keys():
+                if s in in_dict.keys():
+                    in_list[s] = in_dict[s]
+
+                if s in out_dict.keys():
+                    out_list[s] = out_dict[s]
+
+            in_list = list(in_list.values())
+            out_list = list(out_list.values())
+
+            context['in_list'] = in_list
+            context['out_list'] = out_list
+
+        else:
+            context['code'] = 1000
+            context['message'] = '请携带线路访问'
+    else:
+        context['code'] = 1000
+        context['message'] = '无法获取站点的断面客流'
+
+    return JsonResponse(context)
