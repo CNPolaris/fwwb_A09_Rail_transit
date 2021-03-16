@@ -8,7 +8,7 @@ from transit.apis import echarts, exports
 
 echarts_api_urls = [
     # 单月客流
-    url(r'^echarts/month', echarts.get_month_flow),
+    url('charts/flow/month', echarts.all_month_flow),
     # 单日客流量
     url(r'^echarts/daily', echarts.get_daily_flow),
     # 用户年龄结构
@@ -17,7 +17,10 @@ echarts_api_urls = [
     url(r'^echarts/realtime', echarts.real_time_dispatcher),
     # 站点的OD客流分析
     url('^echarts/od', echarts.get_OD_station, name="get_OD_station"),
+    # 断面客流
     url('charts/route/section', echarts.get_route_section),
+    # 当前在站
+    url('charts/in/station', echarts.get_in_station),
     # url('^echarts/data/dailyflow.json/(?P<year>[0-9]{4})/$', get_daily_year, name='dailyflow'),
     # # 单站的点出/入站客流分析
     # url('^echarts/data/singlesta/(?P<station>)/(?P<year>[0-9]{4})/(?P<month>[0-9]{2})/(?P<day>[0-9]{2})/$',

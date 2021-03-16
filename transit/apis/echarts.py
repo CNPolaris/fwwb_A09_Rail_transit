@@ -23,6 +23,29 @@ TIME_LIST = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
              16, 17, 18, 19, 20, 21, 22, 23]
 
 
+def verify_permissions(request):
+    token = request.GET.get('token')
+    toke_user = jwt_decode_handler(token)
+    user_id = toke_user["user_id"]
+    user = User.objects.get(id=user_id)
+
+    if user:
+        if Profile.objects.filter(user_id=user_id).exists():
+            profile = Profile.objects.get(user_id=user_id)
+            # 将请求参数统一放在request的params属性中，方便后续处理
+            # GET请求 参数在url中，通过request对象的GET属性获取
+            if request.method == 'GET':
+                request.params = request.GET
+
+            # POST/PUT/DELETE 请求 参数从request对象的body属性中获取
+            elif request.method in ['POST', 'PUT', 'DELETE']:
+                # 根据接口，POST/PUT/DELETE 请求的消息体都是 json格式
+                request.params = json.loads(request.body)
+            return True, request
+    else:
+        return True, request
+
+
 def monthly_flow(request):
     """
     根据具体的date来获取当月的整体客流波动情况
@@ -45,27 +68,39 @@ def monthly_flow(request):
 def all_month_flow(request):
     """
     返回当前年的所有月份的客流量
-    :param request: GET /api/echarts/month?action=list_month HTTP/1.1
+    :param request: GET /api/charts/flow/month HTTP/1.1
     :return:
     """
-    context = {'ret': 0}
-    year = request.params.get('year', None)
-    if year is None:
-        year = datetime.date.today().year - 1
-    querySet = TripStatistics.objects.filter(date__contains=year)
-    if querySet:
-        month = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
-        data = []
-        for m in month:
-            tempSet = querySet.filter(date__contains="{}-{}".format(year, m)).values('count')
-            total = 0
-            for t in tempSet:
-                total = total + t['count']
-            data.append({'date': "{}-{}".format(year, m), 'count': total})
-        context['data'] = data
+    flag, request = verify_permissions(request)
+    context = {}
+    if flag:
+        year = request.params.get('year', None)
+        month = request.params.get('month', None)
+        if year is None:
+            year = datetime.date.today().year - 1
+        year = int(year)-1
+        querySet = TripStatistics.objects.filter(date__contains=year)
+        if month:
+            querySet = querySet.filter(date_month__contains=month)
+        if querySet:
+            month = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
+            data = []
+            for m in month:
+                tempSet = querySet.filter(date__contains="{}-{}".format(year, m)).values('count')
+                total = 0
+                for t in tempSet:
+                    total = total + t['count']
+                data.append(total)
+            context['code'] = 2000
+            context['month'] = month
+            context['data'] = data
+        else:
+            context['code'] = 1000
+            context['message'] = "年月度客流量数据不存在"
     else:
-        context['ret'] = 1
-        context['msg'] = "{}年月度客流量数据不存在".format(year)
+        context['code'] = 1000
+        context['message'] = "年月度客流量数据不存在"
+
     return JsonResponse(context)
 
 
@@ -518,22 +553,6 @@ def get_OD_station(request, **kwargs):
         return JsonResponse({'ret': 1, 'msg': "不支持该类型的http访问"})
 
 
-def verify_permissions(request):
-    token = request.GET.get('token')
-    toke_user = jwt_decode_handler(token)
-    user_id = toke_user["user_id"]
-    user = User.objects.get(id=user_id)
-
-    if user:
-        if Profile.objects.filter(user_id=user_id).exists():
-            profile = Profile.objects.get(user_id=user_id)
-            # 将请求参数统一放在request的params属性中，方便后续处理
-            # GET请求 参数在url中，通过request对象的GET属性获取
-            if request.method == 'GET':
-                request.params = request.GET
-            return True, request
-    else:
-        return True, request
 
 
 def get_route_section(request):
@@ -623,4 +642,29 @@ def get_route_section(request):
         context['code'] = 1000
         context['message'] = '无法获取站点的断面客流'
 
+    return JsonResponse(context)
+
+
+def get_in_station(request):
+    """
+    获取当前在站点内的总人数
+    :param request: /api/charts/allin
+    :return: get
+    """
+    flag, request = verify_permissions(request)
+    context = {}
+    if flag:
+        date = request.params.get('date', None)
+        if date:
+            trip_querySet_count = Trips.objects.filter(in_station_time__lte=date, out_station_time__gt=date).count()
+            context['code'] = 2000
+            context['data'] = trip_querySet_count
+
+        else:
+            context['code'] = 1000
+            context['data'] = 0
+            context['message'] ="获取数据失败"
+    else:
+        context['code'] = 1000
+        context['message'] = "未登录用户无法访问"
     return JsonResponse(context)
