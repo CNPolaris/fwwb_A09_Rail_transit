@@ -4,7 +4,7 @@
 # @Author  : CNPolaris
 import calendar
 import json
-import time
+
 
 from transit.models import Trips, Users, Workdays, Station, TripStatistics
 from django.views.decorators.csrf import csrf_exempt
@@ -574,6 +574,8 @@ def get_route_section(request):
         # 获取指定的线路
         route = request.params.get('route', None)
         date = request.params.get('date', None)
+        # TODO:测试时使用的指定数据
+        date = '2020-01-01'
         if route and not date:
             route = '{}号线'.format(route)
             station_list = Station.objects.filter(station_route=route).values('station_name')
@@ -645,77 +647,4 @@ def get_route_section(request):
         context['code'] = 1000
         context['message'] = '无法获取站点的断面客流'
 
-    return JsonResponse(context)
-
-
-def get_in_station(request):
-    """
-    获取当前在站点内的总人数
-    :param request: /api/charts/allin
-    :return: get
-    """
-    flag, request = verify_permissions(request)
-    context = {}
-    if flag:
-        date = request.params.get('date', None)
-        if date:
-            trip_querySet_count = Trips.objects.filter(in_station_time__lte=date, out_station_time__gt=date).count()
-            context['code'] = 2000
-            context['data'] = trip_querySet_count
-
-        else:
-            context['code'] = 1000
-            context['data'] = 0
-            context['message'] = "获取数据失败"
-    else:
-        context['code'] = 1000
-        context['message'] = "未登录用户无法访问"
-    return JsonResponse(context)
-
-
-def get_historical_travel(request):
-    """
-    获取历史出行总量
-    :param request:/api/charts/historical/travel
-    :return: json
-    """
-    flag, request = verify_permissions(request)
-    context = {}
-    if flag:
-        trip_QuerySet_count = Trips.objects.count()
-        context['code'] = 2000
-        context['endVal'] = trip_QuerySet_count
-    else:
-        context['code'] = 1000
-        context['message'] = '未登录用户无法访问'
-    return JsonResponse(context)
-
-
-def get_today_income(request):
-    """
-    获取当日营运额
-    :param request: /api/charts/today/income
-    :return: json
-    """
-    flag, request = verify_permissions(request)
-    context = {}
-    if flag:
-        date = request.params.get('date', None)
-        # TODO：这里为了保证测试时可以使用，指定了数据
-        date = '2020-01-01'
-        if date:
-            trip_querySet = Trips.objects.filter(in_station_time__contains=date).values('price')
-            if trip_querySet:
-                today_income = trip_querySet.aggregate(income=Sum('price'))
-                context['code'] = 2000
-                context['income'] = today_income['income']
-            else:
-                context['code'] = 2000
-                context['income'] = 0
-            return JsonResponse(context)
-        else:
-            context['income'] = 0
-    else:
-        context['code'] = 1000
-        context['message'] = '未登录用户无法访问'
     return JsonResponse(context)

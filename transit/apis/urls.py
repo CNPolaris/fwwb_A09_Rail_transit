@@ -4,7 +4,7 @@
 # @Author  : CNPolaris
 from django.conf.urls import url, include
 from transit.apis import trips, stations, workdays, passenger
-from transit.apis import echarts, exports
+from transit.apis import echarts, exports, basic_statistics
 
 echarts_api_urls = [
     # 单月客流
@@ -19,12 +19,6 @@ echarts_api_urls = [
     url('^echarts/od', echarts.get_OD_station, name="get_OD_station"),
     # 断面客流
     url('charts/route/section', echarts.get_route_section),
-    # 当前在站
-    url('charts/in/station', echarts.get_in_station),
-    # 历史出行客流总量
-    url('charts/historical/travel', echarts.get_historical_travel),
-    # 当日营运额
-    url('charts/today/income', echarts.get_today_income)
     # url('^echarts/data/dailyflow.json/(?P<year>[0-9]{4})/$', get_daily_year, name='dailyflow'),
     # # 单站的点出/入站客流分析
     # url('^echarts/data/singlesta/(?P<station>)/(?P<year>[0-9]{4})/(?P<month>[0-9]{2})/(?P<day>[0-9]{2})/$',
@@ -35,9 +29,16 @@ echarts_api_urls = [
     # # 高峰期站点客流压力
     # url('^echarts/data/peak/(?P<year>[0-9]{4})/(?P<month>[0-9]{2})/(?P<day>[0-9]{2})/(?P<hour>[0-9]{2})/$',
     #     get_peak_station, name="get_peak_station"),
-
 ]
-
+# 基础数据统计
+basic_statistics_urls = [
+    # 当前在站
+    url('in/station', basic_statistics.get_in_station),
+    # 历史出行客流总量
+    url('historical/travel', basic_statistics.get_historical_travel),
+    # 当日营运额
+    url('today/income', basic_statistics.get_today_income)
+]
 trip_urls = [
     url(r'list', trips.dispatcher),
     url(r'create', trips.dispatcher),
@@ -69,5 +70,6 @@ api_urls = [
     url(r'manage/trip/', include(trip_urls)),
     url(r'manage/station/', include(station_urls)),
     url(r'manage/workday/', include(workday_urls)),
-    url(r'manage/passenger/', include(passenger_url))
+    url(r'manage/passenger/', include(passenger_url)),
+    url(r'basic/', include(basic_statistics_urls))
 ]
