@@ -19,6 +19,8 @@ echarts_api_urls = [
     url('^echarts/od', echarts.get_OD_station, name="get_OD_station"),
     # 断面客流
     url('charts/route/section', echarts.get_route_section),
+    # 不同购票渠道的统计
+    url('charts/channel', echarts.get_channel_statistics),
     # url('^echarts/data/dailyflow.json/(?P<year>[0-9]{4})/$', get_daily_year, name='dailyflow'),
     # # 单站的点出/入站客流分析
     # url('^echarts/data/singlesta/(?P<station>)/(?P<year>[0-9]{4})/(?P<month>[0-9]{2})/(?P<day>[0-9]{2})/$',
@@ -71,5 +73,6 @@ api_urls = [
     url(r'manage/station/', include(station_urls)),
     url(r'manage/workday/', include(workday_urls)),
     url(r'manage/passenger/', include(passenger_url)),
+    # 基础数据统计url
     url(r'basic/', include(basic_statistics_urls))
 ]

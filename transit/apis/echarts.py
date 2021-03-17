@@ -15,34 +15,12 @@ import pandas as pd
 from rest_framework_jwt.serializers import jwt_decode_handler
 from django.contrib.auth.models import User
 from userprofile.models import Profile
-
+from ..units.verify import verify_permissions
 """
 向echarts绘制图形提供数据集的api
 """
 TIME_LIST = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
              16, 17, 18, 19, 20, 21, 22, 23]
-
-
-def verify_permissions(request):
-    token = request.GET.get('token')
-    toke_user = jwt_decode_handler(token)
-    user_id = toke_user["user_id"]
-    user = User.objects.get(id=user_id)
-
-    if user:
-        if Profile.objects.filter(user_id=user_id).exists():
-            profile = Profile.objects.get(user_id=user_id)
-            if request.method == 'GET':
-                request.params = request.GET
-
-            # POST/PUT/DELETE 请求 参数从request对象的body属性中获取
-            elif request.method in ['POST', 'PUT', 'DELETE']:
-                # 根据接口，POST/PUT/DELETE 请求的消息体都是 json格式
-                request.params = json.loads(request.body)
-
-            return True, request
-    else:
-        return True, request
 
 
 def monthly_flow(request):
@@ -647,4 +625,33 @@ def get_route_section(request):
         context['code'] = 1000
         context['message'] = '无法获取站点的断面客流'
 
+    return JsonResponse(context)
+
+
+def get_channel_statistics(request):
+    """
+    统计当天的不同购票方式的出行量
+    :param request: GET /api/charts/channel
+    :return: json
+    """
+    flag, request =verify_permissions(request)
+    context = {}
+    if flag:
+        date = request.params.get('date', None)
+        # TODO:测试时使用的指定数据
+        date = '2020-01-01'
+        if date:
+            trip_querySet = Trips.objects.filter(in_station_time__contains=date).values('channel')
+            channel_dict = pd.value_counts([i['channel']for i in trip_querySet]).to_dict()
+            data = []
+            for d in channel_dict.keys():
+                data.append({"value": channel_dict[d], "name": d})
+            context['code'] = 2000
+            context['name'] = list(channel_dict.keys())
+            context['data'] = data
+        else:
+            context['code'] = 1000
+    else:
+        context['code'] = 1000
+        context['message'] = '未登录用户无权访问'
     return JsonResponse(context)
