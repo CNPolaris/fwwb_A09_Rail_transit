@@ -21,6 +21,8 @@ echarts_api_urls = [
     url('charts/route/section', echarts.get_route_section),
     # 不同购票渠道的统计
     url('charts/channel', echarts.get_channel_statistics),
+    # 站点的点出入客流
+    url('charts/flow/point', echarts.get_station_of_point),
     # url('^echarts/data/dailyflow.json/(?P<year>[0-9]{4})/$', get_daily_year, name='dailyflow'),
     # # 单站的点出/入站客流分析
     # url('^echarts/data/singlesta/(?P<station>)/(?P<year>[0-9]{4})/(?P<month>[0-9]{2})/(?P<day>[0-9]{2})/$',

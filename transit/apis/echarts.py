@@ -5,17 +5,18 @@
 import calendar
 import json
 
-
 from transit.models import Trips, Users, Workdays, Station, TripStatistics
 from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Count, Q, Sum
 from django.http import JsonResponse
 import datetime
 import pandas as pd
+import numpy as np
 from rest_framework_jwt.serializers import jwt_decode_handler
 from django.contrib.auth.models import User
 from userprofile.models import Profile
 from ..units.verify import verify_permissions
+
 """
 向echarts绘制图形提供数据集的api
 """
@@ -79,34 +80,6 @@ def all_month_flow(request):
         context['message'] = "年月度客流量数据不存在"
 
     return JsonResponse(context)
-
-
-@csrf_exempt
-def get_month_flow(request):
-    """
-    单月整体客流情况分析业务转发器
-    :param request:GET /api/echarts/month?action=list_month&date=2020-01 HTTP/1.1
-    :return: json
-    """
-    if 'usertype' not in request.session:
-        return JsonResponse({
-            'ret': 302,
-            'msg': '未登录',
-            'redirect': 'sign.html'
-        }, status=302)
-    if request.method == 'GET':
-        request.params = request.GET
-        action = request.params.get('action', None)
-        date = request.params.get('date', None)
-        year = request.params.get('date', None)
-        if action == 'list_month' and date:
-            return monthly_flow(request)
-        elif year or (action and date is None):
-            return all_month_flow(request)
-        else:
-            return JsonResponse({'ret': 1, 'msg': "不支持该类型的http请求"})
-    else:
-        return JsonResponse({'ret': 1, 'msg': "不支持该类型的http请求"})
 
 
 def daily_flow(request):
@@ -177,18 +150,9 @@ def get_age_struct(request):
     age: 用户年龄的分组
     count: 不同年龄段的用户数量
     """
-    # if 'usertype' not in request.session:
-    #     return JsonResponse({
-    #         'ret': 302,
-    #         'msg': '未登录',
-    #         'redirect': 'sign.html'
-    #     }, status=302)
-    token = request.GET.get('token')
-    toke_user = jwt_decode_handler(token)
-    user_id = toke_user["user_id"]
-    user = User.objects.get(id=user_id)
+    flag, request = verify_permissions(request)
 
-    if user and Profile.objects.filter(user_id=user_id).exists():
+    if flag:
         context = {'code': 2000}
         User_list = Users.objects.values_list('birth').annotate(Count("user_id"))
         # 记录不同年龄段的个数
@@ -225,47 +189,6 @@ def get_age_struct(request):
 
     else:
         return JsonResponse({'code': 1000, 'message': '未登录用户无访问权限'})
-
-
-# if request.method == 'GET':
-#         request.params = request.GET
-#         action = request.params.get('action', None)
-#         if action is not None and action == 'age_struct':
-#             context = {'ret': 0}
-#             User_list = Users.objects.values_list('birth').annotate(Count("user_id"))
-#             # 记录不同年龄段的个数
-#             count = [0, 0, 0, 0, 0]
-#             stage = ["0-6", "7-17", "18-40", "41-65", "66+"]
-#             # 获取互联网时间的年份
-#             This_year = datetime.date.today().year
-#             if User_list:
-#                 for line in User_list:
-#                     # 当前的日期减去用户的出生年
-#                     age = This_year - line[0]
-#                     if 0 <= age < 7:
-#                         count[0] = count[0] + line[1]
-#                     elif 7 <= age < 18:
-#                         count[1] = count[1] + line[1]
-#                     elif 18 <= age < 41:
-#                         count[2] = count[2] + line[1]
-#                     elif 41 <= age < 66:
-#                         count[3] = count[3] + line[1]
-#                     elif 66 <= age:
-#                         count[4] = count[4] + line[1]
-#             else:
-#                 context['ret'] = 1
-#                 context['msg'] = "年龄组成结构查询结果为空"
-#                 return JsonResponse(context)
-#             data = []
-#             for s, c in zip(stage, count):
-#                 data.append({'name': s, 'value': c})
-#             # 向前端返回的数据
-#             context['data'] = data
-#             context['name'] = stage
-#             return JsonResponse(context)
-#         return JsonResponse({'ret': 1, 'msg': '不支持该类型http请求'})
-#     else:
-#         return JsonResponse({'ret': 1, 'msg': '不支持该类型http请求'})
 
 
 @csrf_exempt
@@ -435,51 +358,53 @@ def get_peak_station(request, **kwargs):
         return JsonResponse(context)
 
 
-def station_of_point(request):
+def get_station_of_point(request):
     """
     站点的点出入客流分析
-    :param request: GET /api/echarts/realtime?action=station_of_point
+    :param request: GET /api/charts/flow/point
     :return:json
     """
-    context = {'ret': 0}
-    station = request.params.get('station', None)
-    date = request.params.get('date', None)
-    if station and date:
-        Sta_in_querySet = Trips.objects.filter(in_station=station,
-                                               in_station_time__contains=date).values('in_station_time')
-        Sta_out_querySet = Trips.objects.filter(out_station=station,
-                                                out_station_time__contains=date).values('out_station_time')
-        in_dict = pd.value_counts([int(i['in_station_time'].strftime('%H')) for i in Sta_in_querySet]).to_dict()
-        out_dict = pd.value_counts([int(i['out_station_time'].strftime('%H')) for i in Sta_out_querySet]).to_dict()
-        context['in_list'] = [{'hour': i, 'count': in_dict[i]} for i in TIME_LIST if i in in_dict]
-        context['out_list'] = [{'hour': i, 'count': out_dict[i]} for i in TIME_LIST if i in out_dict]
-
-    else:
-        context['ret'] = 1
-        context['msg'] = "请求消息不全"
+    flag, request = verify_permissions(request)
+    context = {}
+    if flag:
+        station = request.params.get('station', None)
+        date = request.params.get('date', None)
+        # TODO:开发时使用的指定数据
+        date = '2020-01-01'
+        if station and date:
+            Sta_in_querySet = Trips.objects.filter(in_station=station,
+                                                   in_station_time__contains=date).values('in_station_time')
+            Sta_out_querySet = Trips.objects.filter(out_station=station,
+                                                    out_station_time__contains=date).values('out_station_time')
+            in_dict = pd.value_counts([int(i['in_station_time'].strftime('%H')) for i in Sta_in_querySet]).to_dict()
+            out_dict = pd.value_counts([int(i['out_station_time'].strftime('%H')) for i in Sta_out_querySet]).to_dict()
+            in_list = []
+            out_list = []
+            for hour in TIME_LIST:
+                if hour in in_dict.keys():
+                    in_list.append(in_dict[hour])
+                else:
+                    in_list.append(0)
+                if hour in out_dict.keys():
+                    out_list.append(out_dict[hour])
+                else:
+                    out_list.append(0)
+            context['code'] = 2000
+            context['hour_list'] = TIME_LIST
+            context['in_list'] = in_list
+            context['out_list'] = out_list
+            context['out_min'] = min(out_list)
+            context['out_max'] = max(out_list)
+            context['out_average'] = np.mean(out_list)
+            context['in_min'] = min(in_list)
+            context['in_max'] = max(in_list)
+            context['in_average'] = np.mean(in_list)
+            # context['in_list'] = [{'hour': i, 'count': in_dict[i]} for i in TIME_LIST if i in in_dict]
+            # context['out_list'] = [{'hour': i, 'count': out_dict[i]} for i in TIME_LIST if i in out_dict]
+        else:
+            context['code'] = 1000
+            context['message'] = "请求消息不全"
     return JsonResponse(context)
-
-
-def real_time_dispatcher(request):
-    """
-    实时客流情况分析事务调度器
-    :param request: GET /api/echarts/realtime?action=station_of_point
-    :return: json
-    """
-    if 'usertype' not in request.session:
-        return JsonResponse({
-            'ret': 302,
-            'msg': '未登录',
-            'redirect': 'sign.html'
-        }, status=302)
-
-    if request.method == 'GET':
-        action = request.GET.get('action', None)
-        request.params = json.loads(request.body)
-        if action == 'station_of_point':
-            return station_of_point(request)
-    else:
-        return JsonResponse({'ret': 1, 'msg': " 不支持该类型的http请求"})
 
 
 def list_od(request):
@@ -634,7 +559,7 @@ def get_channel_statistics(request):
     :param request: GET /api/charts/channel
     :return: json
     """
-    flag, request =verify_permissions(request)
+    flag, request = verify_permissions(request)
     context = {}
     if flag:
         date = request.params.get('date', None)
@@ -642,7 +567,7 @@ def get_channel_statistics(request):
         date = '2020-01-01'
         if date:
             trip_querySet = Trips.objects.filter(in_station_time__contains=date).values('channel')
-            channel_dict = pd.value_counts([i['channel']for i in trip_querySet]).to_dict()
+            channel_dict = pd.value_counts([i['channel'] for i in trip_querySet]).to_dict()
             data = []
             for d in channel_dict.keys():
                 data.append({"value": channel_dict[d], "name": d})
