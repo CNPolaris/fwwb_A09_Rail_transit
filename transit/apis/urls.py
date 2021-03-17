@@ -14,7 +14,7 @@ echarts_api_urls = [
     # 用户年龄结构
     url('charts/passenger/age', echarts.get_age_struct),
     # 实时客流数据
-    url(r'^echarts/realtime', echarts.real_time_dispatcher),
+    url(r'^charts/flow/now', echarts.get_station_now),
     # 站点的OD客流分析
     url('^echarts/od', echarts.get_OD_station, name="get_OD_station"),
     # 断面客流

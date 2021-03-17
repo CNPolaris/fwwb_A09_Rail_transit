@@ -32,8 +32,6 @@ def verify_permissions(request):
     if user:
         if Profile.objects.filter(user_id=user_id).exists():
             profile = Profile.objects.get(user_id=user_id)
-            # 将请求参数统一放在request的params属性中，方便后续处理
-            # GET请求 参数在url中，通过request对象的GET属性获取
             if request.method == 'GET':
                 request.params = request.GET
 
@@ -41,6 +39,7 @@ def verify_permissions(request):
             elif request.method in ['POST', 'PUT', 'DELETE']:
                 # 根据接口，POST/PUT/DELETE 请求的消息体都是 json格式
                 request.params = json.loads(request.body)
+
             return True, request
     else:
         return True, request
@@ -78,7 +77,7 @@ def all_month_flow(request):
         month = request.params.get('month', None)
         if year is None:
             year = datetime.date.today().year - 1
-        year = int(year)-1
+        year = int(year) - 1
         querySet = TripStatistics.objects.filter(date__contains=year)
         if month:
             querySet = querySet.filter(date_month__contains=month)
@@ -331,25 +330,26 @@ def get_station_date(request):
 
 
 @csrf_exempt
-def get_station_now(request, **kwargs):
+def get_station_now(request):
     """
     实时返回当前日期的所有站点的出入站客流压力
-    :param date: 路由中的日期
-    :param request: get
+    :param request: /api/charts/flow/now
     :return: json
     """
-    if request.method == "GET":
-        context = {
-            'label': [],
-            'inNum': [],
-            'outNum': []
-        }
-
+    flag, request = verify_permissions(request)
+    context = {}
+    if flag:
+        year = request.params.get('year', None)
+        month = request.params.get('month', None)
+        day = request.params.get('day', None)
+        year = "2020"
+        month = "01"
+        day = "01"
         # 在Station中查询所有的station_name
         Station_query_set = Station.objects.values('station_name')
         # 在Trips中查询所有的in_station_time和out_station_time
         In_out_station = Trips.objects.filter(
-            in_station_time__contains='{}-{}-{}'.format(kwargs['year'], kwargs['month'], kwargs['day'])).values(
+            in_station_time__contains='{}-{}-{}'.format(year, month, day)).values(
             'in_station', 'out_station')
         if Station_query_set and In_out_station:
             # 存储当前系统中的所有站点
@@ -379,14 +379,19 @@ def get_station_now(request, **kwargs):
                 out_station_dict[outSta] = out_station_dict[outSta] + out_station_list[outSta]
             inNum = [i for i in in_station_dict.values()]
             outNum = [i for i in out_station_dict.values()]
-            context = {
-                'label': station_list,
-                'inNum': inNum,
-                'outNum': outNum
-            }
+            context['code'] = 2000
+            context['label'] = station_list
+            context['in_list'] = inNum
+            context['out_list'] = outNum
             return JsonResponse(context)
         else:
+            context['code'] = 1000
+            context['message'] = '无法获取数据'
             return JsonResponse(context)
+    else:
+        context['code'] = 1000
+        context['message'] = '无法获取数据'
+        return JsonResponse(context)
 
 
 @csrf_exempt
@@ -553,8 +558,6 @@ def get_OD_station(request, **kwargs):
         return JsonResponse({'ret': 1, 'msg': "不支持该类型的http访问"})
 
 
-
-
 def get_route_section(request):
     """
     获取时间端内的指定线路的各站点的断面客流
@@ -663,7 +666,7 @@ def get_in_station(request):
         else:
             context['code'] = 1000
             context['data'] = 0
-            context['message'] ="获取数据失败"
+            context['message'] = "获取数据失败"
     else:
         context['code'] = 1000
         context['message'] = "未登录用户无法访问"
