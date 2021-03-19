@@ -13,6 +13,8 @@ class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     # 用户roles
     roles = models.CharField(max_length=10, blank=True, null=True)
+    # 是否在线 1是0否
+    online = models.IntegerField(blank=True, null=True)
     # 电话号码字段
     phone = models.CharField(max_length=20, blank=True, null=True)
     # 邮箱

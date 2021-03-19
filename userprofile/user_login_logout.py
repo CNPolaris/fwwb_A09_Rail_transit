@@ -31,6 +31,11 @@ def user_login(request):
         user = authenticate(username=username, password=password)
         if user is not None:
             if user.is_active:
+                profile = Profile.objects.get(user_id=user.id)
+                if profile.online == 1:
+                    return JsonResponse({'code': 1000, 'message': '同一用户不得登录多个设备'})
+                profile.online = 1
+                profile.save()
                 if user.is_superuser:
                     login(request, user)
                     request.session['usertype'] = 'admin'
@@ -58,6 +63,12 @@ def user_login(request):
 
 
 def user_logout(request):
+    token = request.GET.get('token')
+    toke_user = jwt_decode_handler(token)
+    user_id = toke_user["user_id"]
+    profile = Profile.objects.get(user_id=user_id)
+    profile.online = 0
+    profile.save()
     logout(request)
     return JsonResponse({'code': 2000})
 
@@ -80,7 +91,7 @@ def get_user_info(request):
                     'data': {
                         'username': user.username,
                         'roles': profile.roles,
-                        'avatar': 'https://wpimg.wallstcn.com/f778738c-e4f8-4870-b634-56703b4acafe.gif',
+                        'avatar': 'https://gitee.com/cnpolaris-tian/giteePagesImages/raw/master/null/IMG_7777(20200409-144633).JPG',
                         'introduction': profile.introduction,
                     }
                 }
