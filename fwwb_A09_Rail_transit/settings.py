@@ -78,8 +78,8 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'transit',
         'USER': 'root',
-        'PASSWORD': '123',
-        'HOST': '127.0.0.1',
+        'PASSWORD': 'cnpolaris',
+        'HOST': '47.117.118.196',
         'PORT': '3306',
     }
 }
