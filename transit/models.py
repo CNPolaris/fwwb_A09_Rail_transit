@@ -43,11 +43,11 @@ class Station(models.Model):
     # 站点编号
     station_id = models.IntegerField(primary_key=True, verbose_name="站点编号")
     # 站点名称
-    station_name = models.CharField(max_length=255, verbose_name="站点名称")
+    station_name = models.IntegerField(verbose_name="站点名称")
     # 路线
-    station_route = models.CharField(max_length=100, verbose_name="行驶路线")
+    station_route = models.IntegerField(verbose_name="行驶路线")
     # 行政区域
-    admin_area = models.CharField(max_length=100, verbose_name="行政区域")
+    admin_area = models.IntegerField(verbose_name="行政区域")
 
     class Meta:
         default_permissions = ('view', 'add', 'change', 'delete', 'exports')
@@ -72,11 +72,11 @@ class Trips(models.Model):
     # 乘客编号
     user_id = models.ForeignKey(Users, on_delete=models.CASCADE, verbose_name="乘客编号")
     # 进站名
-    in_station = models.CharField(max_length=255, verbose_name="入站点")
+    in_station = models.IntegerField(verbose_name="入站点")
     # 进站时间
     in_station_time = models.DateTimeField(verbose_name="进站时间")
     # 出站名
-    out_station = models.CharField(max_length=255, verbose_name="出站点")
+    out_station = models.IntegerField(verbose_name="出站点")
     # 出站时间
     out_station_time = models.DateTimeField(verbose_name="出站时间")
     # 购票渠道

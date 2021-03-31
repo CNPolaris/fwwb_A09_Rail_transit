@@ -2,20 +2,16 @@
 # @Time    : 2021/1/10 10:19
 # @FileName: echarts.py
 # @Author  : CNPolaris
-import calendar
 import json
 
-from transit.models import Trips, Users, Workdays, Station, TripStatistics
+from transit.models import Trips, Users, Station, TripStatistics
 from django.views.decorators.csrf import csrf_exempt
-from django.db.models import Count, Q, Sum
+from django.db.models import Count, Q
 from django.http import JsonResponse
 import datetime
 import pandas as pd
 import numpy as np
-from rest_framework_jwt.serializers import jwt_decode_handler
-from django.contrib.auth.models import User
-from userprofile.models import Profile
-from ..units.verify import verify_permissions
+from units.verify import verify_permissions
 
 """
 向echarts绘制图形提供数据集的api
@@ -480,16 +476,13 @@ def get_route_section(request):
         # TODO:测试时使用的指定数据
         date = '2020-01-01'
         if route and not date:
-            route = '{}号线'.format(route)
             station_list = Station.objects.filter(station_route=route).values('station_name')
-            station_list = [i['station_name'] for i in station_list]
+            station_list = sorted([i['station_name'] for i in station_list])
             context['station'] = station_list
 
             station_dict = dict(zip(station_list, [0] * len(station_list)))
             tripSet = tripSet.filter(Q(in_station__in=station_list) | Q(out_station__in=station_list)).values(
                 'in_station', 'out_station')
-
-            context['code'] = 2000
 
             in_list = station_dict
             in_dict = pd.value_counts([i['in_station'] for i in tripSet]).to_dict()
@@ -507,14 +500,14 @@ def get_route_section(request):
             in_list = list(in_list.values())
             out_list = list(out_list.values())
 
+            context['code'] = 2000
             context['in_list'] = in_list
             context['out_list'] = out_list
 
         elif route and date:
-            route = '{}号线'.format(route)
 
             station_list = Station.objects.filter(station_route=route).values('station_name')
-            station_list = [i['station_name'] for i in station_list]
+            station_list = sorted([i['station_name'] for i in station_list])
             context['station'] = station_list
             station_dict = dict(zip(station_list, [0] * len(station_list)))
 

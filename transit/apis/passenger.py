@@ -164,7 +164,7 @@ def modify_passenger(request):
     :param request: PUT/json
     :return:json
     """
-    context = {'ret': 1000}
+    context = {'code': 1000}
     uid = request.params['passenger_id']
     try:
         user = Users.objects.get(user_id=uid)

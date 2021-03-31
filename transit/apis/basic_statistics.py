@@ -3,10 +3,10 @@
 # @FileName: basic_statistics.py
 # @Author  : CNPolaris
 
-from transit.models import Trips, Users, Workdays, Station, TripStatistics
-from django.db.models import Count, Q, Sum
+from transit.models import Trips
+from django.db.models import Sum
 from django.http import JsonResponse
-from ..units import verify
+from units import verify
 
 
 def get_in_station(request):
