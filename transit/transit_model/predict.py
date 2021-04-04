@@ -21,24 +21,6 @@ def weather_form():
     return None
 
 
-def get_weather_data(**kwargs):
-    """
-    获取天气数据
-    ['max_temperature', 'min_temperature', 'wind_force','air_quality', 'year', 'month', 'day']
-    :return:
-    """
-    weather_sheet = pd.DataFrame()
-    weather_sheet['year'] = [kwargs['year']]
-    weather_sheet['month'] = [kwargs['month']]
-    weather_sheet['day'] = [kwargs['day']]
-
-    weather_sheet['max_temperature'] = [15]
-    weather_sheet['min_temperature'] = [14]
-    weather_sheet['wind_force'] = [3]
-    weather_sheet['air_quality'] = [60]
-    return weather_sheet
-
-
 def load_station():
     """
     获取站点 并转换成list
@@ -61,7 +43,12 @@ def merge_predict_data(**kwargs):
     predict_sheet['day'] = [kwargs['day']]
     # predict_sheet['weekday'] = [kwargs['weekday']]
     # 整合天气数据
-    predict_sheet = pd.merge(predict_sheet, get_weather_data(**kwargs), on=['year', 'month', 'day'])
+
+    predict_sheet['max_temperature'] = [15]
+    predict_sheet['min_temperature'] = [14]
+    predict_sheet['wind_force'] = [3]
+    predict_sheet['air_quality'] = [60]
+
     return predict_sheet
 
 
@@ -88,7 +75,7 @@ def predict(df, station, label):
     # 导入模型
     gbm = load_model(station, label)
     y_pred = gbm.predict(df)
-    return y_pred
+    return int(y_pred[0])
 
 
 def main(request):
@@ -116,10 +103,8 @@ def main(request):
                                           weekday=int(weekday))
 
         for sta in station:
-            pred1 = predict(predict_data, sta, 'in')
-            pred2 = predict(predict_data, sta, 'out')
-            in_list.append(int(pred1[0]))
-            out_list.append(int(pred2[0]))
+            in_list.append(predict(predict_data, sta, 'in'))
+            out_list.append(predict(predict_data, sta, 'out'))
 
         context['code'] = 2000
         context['label'] = station
