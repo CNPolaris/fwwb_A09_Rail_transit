@@ -156,6 +156,16 @@ class Workdays(models.Model):
         return url
 
 
+# 天气
+class Weather(models.Model):
+    date = models.DateField(primary_key=True, verbose_name="日期")
+    max_temperature = models.IntegerField(verbose_name="最高温度")
+    min_temperature = models.IntegerField(verbose_name="最低温度")
+    wind_force = models.IntegerField(verbose_name="风力等级")
+    air_quality = models.IntegerField(verbose_name="空气质量")
+    weather = models.CharField(max_length=20,verbose_name="天气情况")
+
+
 @receiver(post_save, sender=Trips)
 def countAdd(instance, **kwargs):
     """

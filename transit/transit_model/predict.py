@@ -7,6 +7,10 @@ import pandas as pd
 from units.verify import verify_permissions
 from django.http import JsonResponse
 import lightgbm as lgb
+import os
+from fwwb_A09_Rail_transit.settings import BASE_DIR
+
+MODEL_PATH = os.path.join(BASE_DIR, 'static\model\\')
 
 
 def weather_form():
@@ -17,21 +21,21 @@ def weather_form():
     return None
 
 
-def get_weather_data(data):
+def get_weather_data(**kwargs):
     """
     获取天气数据
     ['max_temperature', 'min_temperature', 'wind_force','air_quality', 'year', 'month', 'day']
     :return:
     """
     weather_sheet = pd.DataFrame()
-    weather_sheet['year'] = pd.to_datetime(data['date'], format='%Y-%m-%d %H:%M:%S').dt.year
-    weather_sheet['month'] = pd.to_datetime(data['date'], format='%Y-%m-%d %H:%M:%S').dt.month
-    weather_sheet['day'] = pd.to_datetime(data['date'], format='%Y-%m-%d %H:%M:%S').dt.day
+    weather_sheet['year'] = [kwargs['year']]
+    weather_sheet['month'] = [kwargs['month']]
+    weather_sheet['day'] = [kwargs['day']]
 
-    weather_sheet['max_temperature'] = None
-    weather_sheet['min_temperature'] = None
-    weather_sheet['wind_force'] = None
-    weather_sheet['air_quality'] = None
+    weather_sheet['max_temperature'] = [15]
+    weather_sheet['min_temperature'] = [14]
+    weather_sheet['wind_force'] = [3]
+    weather_sheet['air_quality'] = [60]
     return weather_sheet
 
 
@@ -41,37 +45,23 @@ def load_station():
     :return: list
     """
     station_querySet = Station.objects.values('station_name')
-    return sorted(list(station_querySet))
+    station_list = [sta['station_name'] for sta in station_querySet]
+    return station_list
 
 
-def date_form(time):
-    """
-    标准化时间
-    :return:
-    """
-    hour = pd.to_datetime(time['date'], format='%Y-%m-%d %H:%M:%S').dt.hour
-    minute = pd.to_datetime(time['date'], format='%Y-%m-%d %H:%M:%S').dt.minute
-
-    return hour * 6 + int(minute / 10)
-
-
-def merge_predict_data(data):
+def merge_predict_data(**kwargs):
     """
     整合预测数据
     :return: pd
     """
     predict_sheet = pd.DataFrame()
-    # 规范时间
-    time = date_form(data)
-    predict_sheet['year'] = pd.to_datetime(data['date'], format='%Y-%m-%d %H:%M:%S').dt.year
-    predict_sheet['month'] = pd.to_datetime(data['date'], format='%Y-%m-%d %H:%M:%S').dt.month
-    predict_sheet['day'] = pd.to_datetime(data['date'], format='%Y-%m-%d %H:%M:%S').dt.day
-    predict_sheet['weekday'] = pd.to_datetime(data['date'], format='%Y-%m-%d %H:%M:%S').dt.weekday
-    predict_sheet['Standard_time'] = time
-
+    predict_sheet['Standard_time'] = [kwargs['standard_time']]
+    predict_sheet['year'] = [kwargs['year']]
+    predict_sheet['month'] = [kwargs['month']]
+    predict_sheet['day'] = [kwargs['day']]
+    # predict_sheet['weekday'] = [kwargs['weekday']]
     # 整合天气数据
-    predict_sheet = pd.merge(predict_sheet, get_weather_data(data), on=['year', 'month', 'day'])
-
+    predict_sheet = pd.merge(predict_sheet, get_weather_data(**kwargs), on=['year', 'month', 'day'])
     return predict_sheet
 
 
@@ -82,7 +72,8 @@ def load_model(station, label):
     :param label: in or out
     :return: lightgbm model
     """
-    gbm = lgb.Booster(f'model/model_{station}_{label}.txt')
+    model_path = f'model_{station}_{label}.txt'
+    gbm = lgb.Booster(model_file=MODEL_PATH + model_path)
     return gbm
 
 
@@ -103,22 +94,37 @@ def predict(df, station, label):
 def main(request):
     """
     预测主方法
-    :param request: POST
+    :param request: GET
     :return: json
     """
 
-    request, flag = verify_permissions(request)
+    flag, request = verify_permissions(request)
     context = {}
     if flag:
         station = load_station()
-        pred_dict = {}
-        predict_data = merge_predict_data(request.params)
+        in_list = []
+        out_list = []
+        year = request.params.get('year', None)
+        month = request.params.get('month', None)
+        day = request.params.get('day', None)
+        hour = request.params.get('hour', None)
+        minute = request.params.get('minute', None)
+        standard_time = int(hour) * 6 + int(int(minute) / 10)
+        weekday = request.params.get('weekday', None)
+
+        predict_data = merge_predict_data(year=int(year), month=int(month), day=int(day), standard_time=standard_time,
+                                          weekday=int(weekday))
+
         for sta in station:
             pred1 = predict(predict_data, sta, 'in')
             pred2 = predict(predict_data, sta, 'out')
-            pred_dict[sta] = {'station': sta, 'in': pred1, 'out': pred2}
+            in_list.append(int(pred1[0]))
+            out_list.append(int(pred2[0]))
+
         context['code'] = 2000
-        context['data'] = pred_dict
+        context['label'] = station
+        context['in_list'] = in_list
+        context['out_list'] = out_list
 
     else:
         context['code'] = 1000
