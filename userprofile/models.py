@@ -18,7 +18,7 @@ class Profile(models.Model):
     # 电话号码字段
     phone = models.CharField(max_length=20, blank=True, null=True)
     # 头像
-    avatar = models.CharField(max_length=50, blank=True, null=True)
+    avatar = models.CharField(max_length=150, blank=True, null=True)
     # 个人简介
     introduction = models.TextField(max_length=100, blank=True)
 

@@ -33,10 +33,34 @@ def RoleManage(request):
 def create_new_user(request):
     """
     创建新的用户
-    :param request: /api/role/create
+    :param request: POST/api/role/create
     :return: json
     """
-    return None
+    flag, user, profile, request = admin_permissions(request)
+    context = {}
+    if flag:
+        # 提取数据
+        user_name = request.params.get('username')
+        password = request.params.get('password')
+        email = request.params.get('email')
+        role = request.params.get('role')
+        introduction = request.params.get('introduction')
+        online = 0
+        avatar = 'https://gitee.com/cnpolaris-tian/giteePagesImages/raw/master/null/IMG_7777(20200409-144633).JPG'
+        user = User.objects.create_user(username=user_name, password=password, email=email)
+
+        profile = Profile.objects.get(user=user)
+        profile.roles = role
+        profile.introduction = introduction
+        profile.online = online
+        profile.avatar = avatar
+        profile.save()
+
+        context['code'] = 2000
+    else:
+        context['code'] = 1000
+        context['message'] = "非管理员无法操作"
+    return JsonResponse(context)
 
 
 def list_role(request):
