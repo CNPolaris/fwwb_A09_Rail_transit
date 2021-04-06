@@ -17,8 +17,18 @@ userprofile = [
     url(r'^info', user_login_logout.get_user_info),
 ]
 
-rolemanage_urls = [
+role_urls = [
     # 权限管理
-    url('manage', rolemanage.RoleManage)
+    url('manage', rolemanage.RoleManage),
+    # 创建新用户
+    url('create', rolemanage.create_new_user),
+    # 获取所有用户的权限列表
+    url('list', rolemanage.list_role),
+    # 修改用户权限
+    url('update', rolemanage.modify_user_role),
+    # 强制用户下线
+    url('off', rolemanage.offline),
+    # 修改用户的信息
+    url('info', rolemanage.modify_user_info),
 
 ]
