@@ -28,7 +28,7 @@ def load_station():
     """
     station_querySet = Station.objects.values('station_name')
     station_list = [sta['station_name'] for sta in station_querySet]
-    return station_list
+    return sorted(station_list)
 
 
 def merge_predict_data(**kwargs):

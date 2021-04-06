@@ -403,58 +403,49 @@ def get_station_of_point(request):
     return JsonResponse(context)
 
 
-def list_od(request):
-    """
-    根据date列出所有站点的OD客流
-    :param request:
-    :return:json
-    """
-    context = {'ret': 0}
-    date = request.params['date']
-    station = request.params.get('station', None)
-    if station is not None:
-        Trips_querySet = Trips.objects.filter(Q(in_station=station) | Q(out_station=station),
-                                              Q(in_station_time__contains=date) | Q(
-                                                  out_station_time__contains=date)).values("in_station", "out_station")
-    else:
-        Trips_querySet = Trips.objects.filter(
-            Q(in_station_time__contains=date) | Q(out_station_time__contains=date)).values("in_station", "out_station")
-    if Trips_querySet:
-        od = list(Trips_querySet)
-        od_dict = pd.value_counts(od)
-        context['data'] = [{"in_station": i[0]["in_station"], "out_station": i[0]["out_station"], "count": i[1]} for i
-                           in od_dict.items()]
-    else:
-        context['ret'] = 1
-        context['msg'] = "站点信息为空"
-    return JsonResponse(context)
-
-
 @csrf_exempt
 def get_OD_station(request, **kwargs):
     """
     获取站点的OD客流
-    :param request:GET /api/echarts/od?action=list_od
+    :param request:GET /api/charts/od
     :param kwargs:
     :return:
     """
-    if 'usertype' not in request.session:
-        return JsonResponse({
-            'ret': 302,
-            'msg': '未登录',
-            'redirect': 'sign.html'
-        }, status=302)
-
-    if request.method == "GET":
-        request.params = json.loads(request.body)
-        action = request.params.get('action', None)
-        date = request.params.get('date', None)
-        if action == 'list_od' and date:
-            return list_od(request)
+    flag, request = verify_permissions(request)
+    context = {'code': 0}
+    if flag:
+        Trips_querySet = Trips.objects.all()
+        date = request.params['date']
+        station = request.params.get('station', None)
+        if station is not None:
+            Trips_querySet = Trips_querySet.filter(Q(in_station=station) | Q(out_station=station),
+                                                  Q(in_station_time__contains=date) | Q(
+                                                      out_station_time__contains=date)).values("in_station",
+                                                                                               "out_station")
         else:
-            return JsonResponse({'ret': 1, 'msg': "不支持该类型的http访问"})
+            Trips_querySet = Trips.objects.filter(
+                Q(in_station_time__contains=date) | Q(out_station_time__contains=date)).values("in_station",
+                                                                                               "out_station")
+        if Trips_querySet:
+            od = list(Trips_querySet)
+            od_dict = pd.value_counts(od)
+            context['code'] = 2000
+            context['data'] = [
+                                {
+                                    "in_station": i[0]["in_station"],
+                                    "out_station": i[0]["out_station"],
+                                    "count": i[1]
+                                }
+                                for i in od_dict.items()
+                            ]
+        else:
+            context['code'] = 1000
+            context['message'] = "站点信息为空"
+        return JsonResponse(context)
     else:
-        return JsonResponse({'ret': 1, 'msg': "不支持该类型的http访问"})
+        context['code'] = 1000
+        context['message'] = '未登录用户无权访问'
+    return JsonResponse(context)
 
 
 def get_route_section(request):
