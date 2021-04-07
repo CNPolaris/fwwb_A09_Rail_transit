@@ -61,13 +61,14 @@ def RoleManage(request):
 
         if queryDict:
             queryset = User_querySet.filter(**queryDict).values('id', 'username', 'is_superuser', 'profile__roles',
-                                                                'profile__online',
-                                                                'email', 'last_login', 'is_active').order_by(sort)
+                                                                'profile__online', 'profile__email', 'phone',
+                                                                'last_login', 'is_active',
+                                                                'profile__introduction').order_by(sort)
 
         else:
             queryset = User_querySet.values('id', 'username', 'is_superuser', 'profile__roles',
-                                            'profile__online',
-                                            'email', 'last_login', 'is_active').order_by(sort)
+                                            'profile__online', 'email', 'profile__phone', 'last_login', 'is_active',
+                                            'profile__introduction').order_by(sort)
 
         paginator = Paginator(queryset, pagelimit)
         page = paginator.page(pagenum)
@@ -96,18 +97,26 @@ def create_new_user(request):
         email = request.params.get('email')
         role = request.params.get('role')
         introduction = request.params.get('introduction')
+        phone = request.params.get('phone')
         online = 0
         avatar = 'https://gitee.com/cnpolaris-tian/giteePagesImages/raw/master/null/IMG_7777(20200409-144633).JPG'
-        user = User.objects.create_user(username=user_name, password=password, email=email)
 
-        profile = Profile.objects.get(user=user)
-        profile.roles = role
-        profile.introduction = introduction
-        profile.online = online
-        profile.avatar = avatar
-        profile.save()
+        try:
+            user = User.objects.create_user(username=user_name, password=password, email=email)
 
+            profile = Profile.objects.get(user=user)
+            profile.roles = role
+            profile.introduction = introduction
+            profile.online = online
+            profile.avatar = avatar
+            profile.phone = phone
+            profile.save()
+        except BaseException as e:
+            context['code'] = 1000
+            context['message'] = '用户名重复请重新输入'
         context['code'] = 2000
+        context['message'] = "创建新用户成功"
+
     else:
         context['code'] = 1000
         context['message'] = "非管理员无法操作"
