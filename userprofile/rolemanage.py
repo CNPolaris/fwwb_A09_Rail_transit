@@ -13,7 +13,7 @@ from units.verify import admin_permissions
 def RoleManage(request):
     """
     用户权限管理 superuser才能实现的业务
-    :param request: /api/role/manage
+    :param request: GET/api/role/manage
     :return: json
     """
     flag, user, profile, request = admin_permissions(request)
@@ -93,12 +93,17 @@ def modify_user_role(request):
     context = {}
     if flag:
         uid = request.params.get('id')
-        role = request.params.get('role')
-        user = User.objects.get(id=uid)
-        user.profile.roles = role
-        user.save()
-        context['code'] = 2000
-        context['message'] = '权限修改成功'
+        role = request.params.get('role',None)
+        if User.objects.get(id=uid):
+            user = User.objects.get(id=uid)
+            if role and role in [1, 2,3]:
+                user.profile.roles = role
+            user.save()
+            context['code'] = 2000
+            context['message'] = '权限修改成功'
+        else:
+            context['code'] = 1000
+            context['message'] = "不存在指定用户"
     else:
         context['code'] = 1000
         context['message'] = "非管理员无法操作"
@@ -116,12 +121,17 @@ def offline(request):
     context = {}
     if flag:
         uid = request.params.get('id')
-        active = request.params.get('active')
-        user = User.objects.get(id=uid)
-        user.is_active = active
-        user.save()
-        context['code'] = 2000
-        context['message'] = '权限修改成功'
+        active = request.params.get('active', None)
+        if User.objects.get(id=uid):
+            user = User.objects.get(id=uid)
+            if active:
+                user.is_active = active
+            user.save()
+            context['code'] = 2000
+            context['message'] = '用户状态修改成功'
+        else:
+            context['code'] = 1000
+            context['message'] = "不存在指定用户"
     else:
         context['code'] = 1000
         context['message'] = "非管理员无法操作"
@@ -139,19 +149,26 @@ def modify_user_info(request):
     context = {}
     if flag:
         uid = request.params.get('id')
-        user_name = request.params.get('username')
-        email = request.params.get('email')
-        introduction = request.params.get('introduction')
+        user_name = request.params.get('username', None)
+        email = request.params.get('email', None)
+        introduction = request.params.get('introduction',None)
 
-        user = User.objects.get(id=uid)
+        if User.objects.get(id=uid):
+            user = User.objects.get(id=uid)
+            if user_name is not None:
+                user.username = user_name
+            if email is not None:
+                user.email = email
+            if introduction is not None:
+                user.profile.introduction = introduction
 
-        user.username = user_name
-        user.email = email
-        user.profile.introduction = introduction
+            user.save()
+            context['code'] = 2000
+            context['message'] = '用户信息修改成功'
+        else:
+            context['code'] = 1000
+            context['message'] = "不存在指定的用户"
 
-        user.save()
-        context['code'] = 2000
-        context['message'] = '权限修改成功'
     else:
         context['code'] = 1000
         context['message'] = "非管理员无法操作"
