@@ -15,6 +15,8 @@ userprofile = [
     url(r'^logout', user_login_logout.user_logout),
     # 用户信息
     url(r'^info', user_login_logout.get_user_info),
+    # 获取当前权限等级
+    url(r'^role', user_login_logout.get_role),
 ]
 
 role_urls = [

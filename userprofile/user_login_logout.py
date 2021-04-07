@@ -101,3 +101,31 @@ def get_user_info(request):
 
         else:
             return JsonResponse({'code': 1000, 'message': '无访问权限'})
+
+
+def get_role(request):
+    """
+    获取当前的权限等级
+    :param request: get/api/
+    :return:
+    """
+    if request.method == 'GET':
+        token = request.GET.get('token')
+        if token:
+            toke_user = []
+            toke_user = jwt_decode_handler(token)
+            user_id = toke_user["user_id"]
+            user = User.objects.get(id=user_id)
+            context = {
+                'code': 2000,
+                'role': user.profile.roles
+            }
+            return JsonResponse(context)
+        else:
+            return JsonResponse({'code': 1000, 'message': '无访问权限'})
+
+    else:
+        return JsonResponse({'code': 1000, 'message': '无访问权限'})
+
+
+
