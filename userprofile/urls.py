@@ -30,5 +30,6 @@ role_urls = [
     url('off', rolemanage.offline),
     # 修改用户的信息
     url('info', rolemanage.modify_user_info),
-
+    # 删除用户
+    url('delete', rolemanage.delete_role)
 ]

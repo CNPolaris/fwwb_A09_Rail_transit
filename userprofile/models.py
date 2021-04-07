@@ -26,10 +26,9 @@ class Profile(models.Model):
         return 'user {}'.format(self.user.username)
 
 
-# 用户注销时清除头像
-@receiver(pre_delete, sender=Profile)
-def file_delete(sender, instance, **kwargs):
-    instance.avatar.delete(False)
+@receiver(pre_delete, sender=User)
+def user_delete(sender, instance,**kwargs):
+    Profile.objects.get(user=instance).delete()
 
 
 # 信号接收函数，每当新建User实例时自动调用
