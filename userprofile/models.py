@@ -42,3 +42,9 @@ def create_user_profile(sender, instance, created, **kwargs):
 @receiver(post_save, sender=User)
 def save_user_profile(sender, instance, **kwargs):
     instance.profile.save()
+
+
+class Permission(models.Model):
+    permission = models.CharField(max_length=10,verbose_name="权限等级", null=True)
+    rule = models.CharField(max_length=20, verbose_name="权限规则", null=True)
+    description = models.CharField(max_length=30, verbose_name="描述", null=True)

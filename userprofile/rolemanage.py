@@ -4,10 +4,10 @@
 # @Author  : CNPolaris
 
 from django.contrib.auth.models import User
-from userprofile.models import Profile
+from userprofile.models import Profile, Permission
 from django.http import JsonResponse
 from django.core.paginator import Paginator
-from units.verify import admin_permissions
+from units.verify import admin_permissions, verify_permissions
 
 
 def get_params_role(request):
@@ -40,6 +40,75 @@ def get_params_role(request):
         query_dict['email'] = mail
 
     return query_dict
+
+
+def get_permission_list(request):
+    """
+    获取权限表
+    :param request:get /api/role/permission
+    :return: json
+    """
+    context = {}
+    flag, request = verify_permissions(request)
+    if flag:
+        permission_querySet = Permission.objects.all().values()
+        context['code'] = 2000
+        context['data'] = list(permission_querySet)
+        context['message'] = "获取权限信息成功"
+
+    else:
+        context['code'] = 1000
+        context['message'] = '未登录用户无法访问数据'
+    return JsonResponse(context)
+
+
+def edit_permission(request):
+    """
+    编辑权限表
+    :param request: post /api/role/permission/edit
+    :return: json
+    """
+    context = {}
+    flag, user, profile, request = admin_permissions(request)
+    if flag:
+        pid = request.params.get('id')
+        permission = Permission.objects.get(id=pid)
+
+        rule = request.params.get('rule')
+        description = request.params.get('description')
+
+        permission.rule = rule
+        permission.description = description
+
+        permission.save()
+        context['code'] = 2000
+        context['message'] = "编辑权限成功"
+
+    else:
+        context['code'] = 1000
+        context['message'] = "非管理员无法操作"
+    return JsonResponse(context)
+
+
+def get_role_permission(request):
+    """
+    查看对应权限的用户有哪些
+    :param request: get /api/role/permission/look
+    :return: json
+    """
+    context = {}
+    flag, user, profile, request = admin_permissions(request)
+    if flag:
+        User_querySet = User.objects.all()
+        permission = request.params.get('permission')
+        query = User_querySet.filter(profile__roles=permission).vlaues('id', 'username', 'profile__roles')
+        context['code'] = 2000
+        context['data'] = list(query)
+        context['message'] = '查询成功'
+    else:
+        context['code'] = 1000
+        context['message'] = "非管理员无法操作"
+    return JsonResponse(context)
 
 
 def RoleManage(request):

@@ -33,5 +33,11 @@ role_urls = [
     # 修改用户的信息
     url('info', rolemanage.modify_user_info),
     # 删除用户
-    url('delete', rolemanage.delete_role)
+    url('delete', rolemanage.delete_role),
+    # 获取权限表
+    url('permission', rolemanage.get_permission_list),
+    # 编辑权限表
+    url('permission/edit', rolemanage.edit_permission),
+    # 查询指定权限的用户有哪些
+    url('permission/look', rolemanage.get_role_permission)
 ]
