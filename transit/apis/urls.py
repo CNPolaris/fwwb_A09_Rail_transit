@@ -23,7 +23,10 @@ echarts_api_urls = [
     url('charts/channel', echarts.get_channel_statistics),
     # 站点的点出入客流
     url('charts/flow/point', echarts.get_station_of_point),
-    url('charts/week', echarts.get_work_week)
+    # 工作日客流分析
+    url('charts/week', echarts.get_work_week),
+    # 高峰期客流分析
+    url('charts/peak', echarts.get_peak_period),
 ]
 # 基础数据统计
 basic_statistics_urls = [

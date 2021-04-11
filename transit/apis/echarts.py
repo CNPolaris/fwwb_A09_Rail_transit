@@ -291,67 +291,107 @@ def get_station_now(request):
         return JsonResponse(context)
 
 
-@csrf_exempt
-def get_peak_station(request, **kwargs):
+def get_time_params(request):
     """
-    早晚客流高峰期各站点的客流压力分析
-    :param request: GET
+    从消息体中提取时间数据
+    :return: dict
+    """
+    query_dict = {}
+    year = request.params.get('year', None)
+    if year:
+        query_dict['year'] = year
+    month = request.params.get('month', None)
+    if month:
+        query_dict['month'] = month
+    day = request.params.get('day', None)
+    if day:
+        query_dict['day'] = day
+    hour = request.params.get('hour', None)
+    if hour:
+        query_dict['hour'] = hour
+    minute = request.params.get('minute', None)
+    if minute:
+        query_dict['minute'] = minute
+    # TODO:为方便测试使用固定时间
+    query_dict['year'] = 2020
+    query_dict['month'] = 1
+    query_dict['day'] = 1
+    query_dict['hour'] = 10
+    return query_dict
+
+
+def get_station_list_sorted():
+    """
+    获取站点的排序后的list
+    :return: list
+    """
+    Station_query_set = Station.objects.values('station_name')
+    station_list = sorted([i['station_name'] for i in Station_query_set])
+    return station_list, len(station_list)
+
+
+def get_peak_period(request):
+    """
+    获取高峰期个站点的客流情况
+    :param request: GET /api/charts/peak
     :return: json
-    目标图表样式：https://echarts.apache.org/examples/zh/editor.html?c=multiple-y-axis
     """
-    # TODO: 对station进行排序 使站点列表有序
-    if request.method == "GET":
-        # 默认返回空数据
-        context = {
-            "station": [],
-            "in_pressure": [],
-            "out_pressure": []
-        }
-        if 7 <= int(kwargs['hour']) <= 9:
+    flag, request = verify_permissions(request)
+    context = {}
+    if flag:
+        query_dict = get_time_params(request)
+        if 7 <= int(query_dict['hour']) <= 9:
             # 时间区间
-            Time_interval = ['{}-{}-{} {}'.format(kwargs['year'], kwargs['month'], kwargs['day'], '07:00'), '{}-{}-{} '
-                                                                                                            '{}'.format(
-                kwargs['year'], kwargs['month'], kwargs['day'], '09:00')]
-        elif 17 <= int(kwargs['hour']) <= 19:
-            Time_interval = ['{}-{}-{} {}'.format(kwargs['year'], kwargs['month'], kwargs['day'], '15:00'), '{}-{}-{} '
-                                                                                                            '{}'.format(
-                kwargs['year'], kwargs['month'], kwargs['day'], "17:00")]
+            Time_interval = ['{}-{}-{} {}'.format(query_dict['year'], query_dict['month'], query_dict['day'], '07:00'),
+                             '{}-{}-{} '
+                             '{}'.format(
+                                 query_dict['year'], query_dict['month'], query_dict['day'], '09:00')]
+        elif 17 <= int(query_dict['hour']) <= 19:
+            Time_interval = ['{}-{}-{} {}'.format(query_dict['year'], query_dict['month'], query_dict['day'], '15:00'),
+                             '{}-{}-{} '
+                             '{}'.format(
+                                 query_dict['year'], query_dict['month'], query_dict['day'], "17:00")]
         else:
-            Time_interval = ['{}-{}-{} 00:00'.format(kwargs['year'], kwargs['month'], kwargs['day']),
-                             '{}-{}-{} 23:59'.format(kwargs['year'], kwargs['month'], kwargs['day'])]
+            Time_interval = ['{}-{}-{} 00:00'.format(query_dict['year'], query_dict['month'], query_dict['day']),
+                             '{}-{}-{} 23:59'.format(query_dict['year'], query_dict['month'], query_dict['day'])]
         # 站点表
-        Station_query_set = Station.objects.values('station_name')
+        # Station_query_set = Station.objects.values('station_name')
+        station_list, station_list_len = get_station_list_sorted()
         # 高峰期进站的客流
         Trips_in_set = Trips.objects.filter(in_station_time__range=(Time_interval[0], Time_interval[1])).values(
             "in_station")
         # 高峰期出站的客流
         Trips_out_set = Trips.objects.filter(out_station_time__range=(Time_interval[0], Time_interval[1])).values(
             "out_station")
-        if Station_query_set:
-            # 站点和站点压力dict
+        # 站点和站点压力dict
+        station_pressure_dict = dict(
+            zip(station_list, [0] * station_list_len))
+        # 进出站点的压力列表
+        in_pressure_list = []
+        out_pressure_list = []
+        if Trips_in_set:
+            in_peak_dict = pd.value_counts([i['in_station'] for i in Trips_in_set]).to_dict()
+            for station in in_peak_dict:
+                station_pressure_dict[station] = in_peak_dict[station]
+            in_pressure_list = list(station_pressure_dict.values())
+        if Trips_out_set:
             station_pressure_dict = dict(
-                zip([i['station_name'] for i in Station_query_set], [0] * len(Station_query_set)))
-            # 进出站点的压力列表
-            in_pressure_list = []
-            out_pressure_list = []
-            if Trips_in_set:
-                in_peak_dict = pd.value_counts([i['in_station'] for i in Trips_in_set]).to_dict()
-                for station in in_peak_dict:
-                    station_pressure_dict[station] = in_peak_dict[station]
-                in_pressure_list = list(station_pressure_dict.values())
-            if Trips_out_set:
-                station_pressure_dict = dict(
-                    zip([i['station_name'] for i in Station_query_set], [0] * len(Station_query_set)))
-                out_peak_dict = pd.value_counts([i['out_station'] for i in Trips_out_set]).to_dict()
-                for station in out_peak_dict:
-                    station_pressure_dict[station] = out_peak_dict[station]
-                out_pressure_list = list(station_pressure_dict.values())
-            context = {
-                "station": [i['station_name'] for i in Station_query_set],
-                "in_pressure": in_pressure_list,
-                "out_pressure": out_pressure_list
-            }
-        return JsonResponse(context)
+                zip(station_list, [0] * station_list_len))
+            out_peak_dict = pd.value_counts([i['out_station'] for i in Trips_out_set]).to_dict()
+            for station in out_peak_dict:
+                station_pressure_dict[station] = out_peak_dict[station]
+            out_pressure_list = list(station_pressure_dict.values())
+        context['code'] = 2000
+        context['station'] = station_list
+        context['in_pressure'] = in_pressure_list
+        context['out_pressure'] = out_pressure_list
+    else:
+        context['code'] = 1000
+        context['station'] = []
+        context['in_pressure'] = []
+        context['out_pressure'] = []
+        context['message'] = '未登录用户无权访问'
+    return JsonResponse(context)
 
 
 def get_station_of_point(request):
@@ -404,7 +444,7 @@ def get_station_of_point(request):
 
 
 @csrf_exempt
-def get_OD_station(request, **kwargs):
+def get_OD_station(request):
     """
     获取站点的OD客流
     :param request:GET /api/charts/od
@@ -419,9 +459,9 @@ def get_OD_station(request, **kwargs):
         station = request.params.get('station', None)
         if station is not None:
             Trips_querySet = Trips_querySet.filter(Q(in_station=station) | Q(out_station=station),
-                                                  Q(in_station_time__contains=date) | Q(
-                                                      out_station_time__contains=date)).values("in_station",
-                                                                                               "out_station")
+                                                   Q(in_station_time__contains=date) | Q(
+                                                       out_station_time__contains=date)).values("in_station",
+                                                                                                "out_station")
         else:
             Trips_querySet = Trips.objects.filter(
                 Q(in_station_time__contains=date) | Q(out_station_time__contains=date)).values("in_station",
@@ -431,13 +471,13 @@ def get_OD_station(request, **kwargs):
             od_dict = pd.value_counts(od)
             context['code'] = 2000
             context['data'] = [
-                                {
-                                    "in_station": i[0]["in_station"],
-                                    "out_station": i[0]["out_station"],
-                                    "count": i[1]
-                                }
-                                for i in od_dict.items()
-                            ]
+                {
+                    "in_station": i[0]["in_station"],
+                    "out_station": i[0]["out_station"],
+                    "count": i[1]
+                }
+                for i in od_dict.items()
+            ]
         else:
             context['code'] = 1000
             context['message'] = "站点信息为空"
@@ -577,13 +617,13 @@ def get_work_week(request):
     if flag:
         date = request.params.get('date')
         Day_sheet1 = pd.DataFrame()
-        trip_s_query_set = TripStatistics.objects.filter(date__contains=date).values('date','count')
-        day_query_set = Workdays.objects.filter(date__contains=date).values('date','date_class')
-        Day_sheet1['date'] = [i['date']for i in trip_s_query_set]
-        Day_sheet1['count'] = [i['count']for i in trip_s_query_set]
+        trip_s_query_set = TripStatistics.objects.filter(date__contains=date).values('date', 'count')
+        day_query_set = Workdays.objects.filter(date__contains=date).values('date', 'date_class')
+        Day_sheet1['date'] = [i['date'] for i in trip_s_query_set]
+        Day_sheet1['count'] = [i['count'] for i in trip_s_query_set]
         Day_sheet2 = pd.DataFrame()
-        Day_sheet2['date'] = [i['date']for i in day_query_set]
-        Day_sheet2['date_class'] = [i['date_class']for i in day_query_set]
+        Day_sheet2['date'] = [i['date'] for i in day_query_set]
+        Day_sheet2['date_class'] = [i['date_class'] for i in day_query_set]
         Day = pd.merge(Day_sheet1, Day_sheet2, on=['date'])
         Day = Day.groupby('date_class')['date_class'].count()
         Day = Day.to_dict()
