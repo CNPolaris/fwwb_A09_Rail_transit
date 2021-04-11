@@ -4,7 +4,7 @@
 # @Author  : CNPolaris
 import json
 
-from transit.models import Trips, Users, Station, TripStatistics
+from transit.models import Trips, Users, Station, TripStatistics, Workdays
 from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Count, Q
 from django.http import JsonResponse
@@ -560,6 +560,38 @@ def get_channel_statistics(request):
             context['data'] = data
         else:
             context['code'] = 1000
+    else:
+        context['code'] = 1000
+        context['message'] = '未登录用户无权访问'
+    return JsonResponse(context)
+
+
+def get_work_week(request):
+    """
+    获取每某年某月的工作日、节假日的客流分析 目标图https://echarts.apache.org/examples/zh/editor.html?c=pie-simple
+    :param request: /api/charts/week
+    :return:json
+    """
+    flag, request = verify_permissions(request)
+    context = {}
+    if flag:
+        date = request.params.get('date')
+        Day_sheet1 = pd.DataFrame()
+        trip_s_query_set = TripStatistics.objects.filter(date__contains=date).values('date','count')
+        day_query_set = Workdays.objects.filter(date__contains=date).values('date','date_class')
+        Day_sheet1['date'] = [i['date']for i in trip_s_query_set]
+        Day_sheet1['count'] = [i['count']for i in trip_s_query_set]
+        Day_sheet2 = pd.DataFrame()
+        Day_sheet2['date'] = [i['date']for i in day_query_set]
+        Day_sheet2['date_class'] = [i['date_class']for i in day_query_set]
+        Day = pd.merge(Day_sheet1, Day_sheet2, on=['date'])
+        Day = Day.groupby('date_class')['date_class'].count()
+        Day = Day.to_dict()
+        data = []
+        for i in Day.keys():
+            data.append({'value': Day[i], 'name': i})
+        context['code'] = 2000
+        context['data'] = data
     else:
         context['code'] = 1000
         context['message'] = '未登录用户无权访问'
