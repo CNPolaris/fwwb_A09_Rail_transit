@@ -3,8 +3,9 @@
 # @FileName: urls.py
 # @Author  : CNPolaris
 from django.conf.urls import url, include
-from transit.transit_model import predict
+from transit.transit_model import predict, predict_by_station
 
 predict_urls = [
-    url('predict', predict.main),
+    url('normal', predict.normal_predict),
+    url('station', predict_by_station.predict_station)
 ]

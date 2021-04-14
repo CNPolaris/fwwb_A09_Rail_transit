@@ -22,7 +22,7 @@ urlpatterns = [
     url(r'^api/userprofile/', include(userprofile)),
     url(r'^api/role/', include(role_urls)),
     # 模型预测
-    url(r'^api/', include(predict_urls)),
+    url(r'^api/predict/', include(predict_urls)),
     # import数据模块
     url('load_dataoftrip', load_dataoftrip, name='load_data'),
     url('load_dataofworkday', load_dataofworkday, name='load_dataofworkday'),

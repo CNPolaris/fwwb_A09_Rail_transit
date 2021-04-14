@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # @Time    : 2021/3/24 17:03
-# @FileName: transit_model.py
+# @FileName: train_model.py
 # @Author  : CNPolaris
 # -*- coding: utf-8 -*-
 # @Time    : 2021/3/23 17:53
