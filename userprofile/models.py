@@ -27,7 +27,7 @@ class Profile(models.Model):
 
 
 @receiver(pre_delete, sender=User)
-def user_delete(sender, instance,**kwargs):
+def user_delete(sender, instance, **kwargs):
     Profile.objects.get(user=instance).delete()
 
 
@@ -45,6 +45,14 @@ def save_user_profile(sender, instance, **kwargs):
 
 
 class Permission(models.Model):
-    permission = models.CharField(max_length=10,verbose_name="权限等级", null=True)
+    permission = models.CharField(max_length=10, verbose_name="权限等级", null=True)
     rule = models.CharField(max_length=20, verbose_name="权限规则", null=True)
     description = models.CharField(max_length=30, verbose_name="描述", null=True)
+
+
+# # 日志主表 记录操作表和操作人等信息
+# class TableLog(models.Model):
+#     tbid = models.IntegerField(primary_key=True)
+#     adminid = models.IntegerField()
+#     type = models.IntegerField()
+#
