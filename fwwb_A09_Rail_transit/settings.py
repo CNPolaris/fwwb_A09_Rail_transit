@@ -136,9 +136,9 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
 STATIC_URL = '/static/'
 # 修改项。指定需要收集的静态文件的位置
 # 即前端打包文件所在位置
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, "frontend/dist/"),
-]
+STATICFILES_DIRS = (
+    os.path.join(BASE_DIR, "static/"),
+)
 
 # 新增项。静态文件收集目录
 STATIC_ROOT = os.path.join(BASE_DIR, 'collected_static')
