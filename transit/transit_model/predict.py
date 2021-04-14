@@ -38,10 +38,10 @@ def merge_predict_data(**kwargs):
     """
     predict_sheet = pd.DataFrame()
     predict_sheet['Standard_time'] = [kwargs['standard_time']]
-    predict_sheet['year'] = [kwargs['year']]
+    # predict_sheet['year'] = [kwargs['year']]
     predict_sheet['month'] = [kwargs['month']]
     predict_sheet['day'] = [kwargs['day']]
-    # predict_sheet['weekday'] = [kwargs['weekday']]
+    predict_sheet['weekday'] = [kwargs['weekday']]
     # 整合天气数据
 
     predict_sheet['max_temperature'] = [15]
@@ -91,7 +91,7 @@ def main(request):
         station = load_station()
         in_list = []
         out_list = []
-        year = request.params.get('year', None)
+        # year = request.params.get('year', None)
         month = request.params.get('month', None)
         day = request.params.get('day', None)
         hour = request.params.get('hour', None)
@@ -99,7 +99,7 @@ def main(request):
         standard_time = int(hour) * 6 + int(int(minute) / 10)
         weekday = request.params.get('weekday', None)
 
-        predict_data = merge_predict_data(year=int(year), month=int(month), day=int(day), standard_time=standard_time,
+        predict_data = merge_predict_data(month=int(month), day=int(day), standard_time=standard_time,
                                           weekday=int(weekday))
 
         for sta in station:

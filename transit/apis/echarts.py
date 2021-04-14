@@ -448,14 +448,15 @@ def get_OD_station(request):
     """
     获取站点的OD客流
     :param request:GET /api/charts/od
-    :param kwargs:
-    :return:
+    :return: json
     """
     flag, request = verify_permissions(request)
     context = {'code': 0}
     if flag:
         Trips_querySet = Trips.objects.all()
         date = request.params['date']
+        # TODO：为方便测试 时间限定为2020-01-01
+        date = '2020-01-01'
         station = request.params.get('station', None)
         if station is not None:
             Trips_querySet = Trips_querySet.filter(Q(in_station=station) | Q(out_station=station),
@@ -470,14 +471,19 @@ def get_OD_station(request):
             od = list(Trips_querySet)
             od_dict = pd.value_counts(od)
             context['code'] = 2000
-            context['data'] = [
+            station_list = []
+            context['links'] = [
                 {
-                    "in_station": i[0]["in_station"],
-                    "out_station": i[0]["out_station"],
-                    "count": i[1]
+                    'source': str(i[0]["in_station"]),
+                    'target': str(i[0]["out_station"]),
+                    'value': i[1]
                 }
-                for i in od_dict.items()
+                for i in od_dict.items() if i[1] > 10
             ]
+            for i in context['links']:
+                station_list.append({'name':i["source"]})
+                station_list.append({'name':i["target"]})
+            context['data'] = list(station_list)
         else:
             context['code'] = 1000
             context['message'] = "站点信息为空"
@@ -616,6 +622,8 @@ def get_work_week(request):
     context = {}
     if flag:
         date = request.params.get('date')
+        # TODO:测试时使用的指定数据
+        date = '2020-01'
         Day_sheet1 = pd.DataFrame()
         trip_s_query_set = TripStatistics.objects.filter(date__contains=date).values('date', 'count')
         day_query_set = Workdays.objects.filter(date__contains=date).values('date', 'date_class')
