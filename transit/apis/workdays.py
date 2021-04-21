@@ -162,9 +162,9 @@ def delete_workday(request):
         workday = Workdays.objects.get(date=date)
         workday.delete()
         context['code'] = 2000
-    except BaseException:
+    except BaseException as e:
         context['code'] = 1000
-        context['message'] = '日期为{}的记录不存在'.format(date)
+        context['message'] = '删除失败，{}'.format(e)
         return JsonResponse(context)
     return JsonResponse(context)
 

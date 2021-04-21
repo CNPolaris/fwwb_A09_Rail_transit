@@ -3,36 +3,31 @@
 # @FileName: urls.py
 # @Author  : CNPolaris
 
-# 引入path
 from django.conf.urls import url, include
-# 正在部署的应用的名称
 from .apis.urls import echarts_api_urls, api_urls
-from transit.apis.imports import load_dataoftrip, load_dataofstation, load_dataofuser, load_dataofworkday
 from userprofile.urls import userprofile, role_urls
 from transit.transit_model.urls import predict_urls
-from transit.views import PassengerViewSet
+from transit.views import PassengerViewSet, WorkdayViewSet, TripViewSet, StationViewSet
 
 app_name = 'transit'
-# from rest_framework import routers
-#
-# router = routers.DefaultRouter()
-# router.register(r'test', PassengerViewSet)
+
 urlpatterns = [
     # 首页路由
-    # jwt
-    # url(r'^api/', include(router.urls)),
-    url(r'^api/test/', PassengerViewSet.as_view({'get':'list','put':'update','delete':'destroy','post':'create'})),
     # API模块
     url(r'^api/', include(echarts_api_urls)),
     url(r'^api/', include(api_urls)),
-    # 用户相关
+    # 数据管理
+    url(r'^api/manage/test/passenger/',
+        PassengerViewSet.as_view({'get': 'list', 'put': 'update', 'delete': 'destroy', 'post': 'create'})),
+    url(r'^api/manage/test/workday',
+        WorkdayViewSet.as_view({'get': 'list', 'put': 'update', 'delete': 'destroy', 'post': 'create'})),
+    url(r'^api/manage/test/trip',
+        TripViewSet.as_view({'get': 'list', 'put': 'update', 'delete': 'destroy', 'post': 'create'})),
+    url(r'^api/manage/test/station',
+        StationViewSet.as_view({'get': 'list', 'put': 'update', 'delete': 'destroy', 'post': 'create'})),
+    # 用户管理
     url(r'^api/userprofile/', include(userprofile)),
     url(r'^api/role/', include(role_urls)),
     # 模型预测
     url(r'^api/predict/', include(predict_urls)),
-    # import数据模块
-    url('load_dataoftrip', load_dataoftrip, name='load_data'),
-    url('load_dataofworkday', load_dataofworkday, name='load_dataofworkday'),
-    url('load_dataofuser', load_dataofuser, name='load_dataofuser'),
-    url('load_dataofstation', load_dataofstation, name='load_dataofstation')
 ]
