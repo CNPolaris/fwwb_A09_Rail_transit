@@ -19,11 +19,11 @@ urlpatterns = [
     # 数据管理
     url(r'^api/manage/test/passenger/',
         PassengerViewSet.as_view({'get': 'list', 'put': 'update', 'delete': 'destroy', 'post': 'create'})),
-    url(r'^api/manage/test/workday',
+    url(r'^api/manage/test/workday/',
         WorkdayViewSet.as_view({'get': 'list', 'put': 'update', 'delete': 'destroy', 'post': 'create'})),
-    url(r'^api/manage/test/trip',
+    url(r'^api/manage/test/trip/',
         TripViewSet.as_view({'get': 'list', 'put': 'update', 'delete': 'destroy', 'post': 'create'})),
-    url(r'^api/manage/test/station',
+    url(r'^api/manage/test/station/',
         StationViewSet.as_view({'get': 'list', 'put': 'update', 'delete': 'destroy', 'post': 'create'})),
     # 用户管理
     url(r'^api/userprofile/', include(userprofile)),
