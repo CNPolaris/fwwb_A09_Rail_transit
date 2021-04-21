@@ -10,11 +10,18 @@ from .apis.urls import echarts_api_urls, api_urls
 from transit.apis.imports import load_dataoftrip, load_dataofstation, load_dataofuser, load_dataofworkday
 from userprofile.urls import userprofile, role_urls
 from transit.transit_model.urls import predict_urls
-app_name = 'transit'
+from transit.views import PassengerViewSet
 
+app_name = 'transit'
+# from rest_framework import routers
+#
+# router = routers.DefaultRouter()
+# router.register(r'test', PassengerViewSet)
 urlpatterns = [
     # 首页路由
-
+    # jwt
+    # url(r'^api/', include(router.urls)),
+    url(r'^api/test/', PassengerViewSet.as_view({'get':'list','put':'update','delete':'destroy','post':'create'})),
     # API模块
     url(r'^api/', include(echarts_api_urls)),
     url(r'^api/', include(api_urls)),
