@@ -17,13 +17,13 @@ urlpatterns = [
     url(r'^api/', include(echarts_api_urls)),
     url(r'^api/', include(api_urls)),
     # 数据管理
-    url(r'^api/manage/test/passenger/',
+    url(r'^api/manage/passenger/',
         PassengerViewSet.as_view({'get': 'list', 'put': 'update', 'delete': 'destroy', 'post': 'create'})),
-    url(r'^api/manage/test/workday/',
+    url(r'^api/manage/workday/',
         WorkdayViewSet.as_view({'get': 'list', 'put': 'update', 'delete': 'destroy', 'post': 'create'})),
-    url(r'^api/manage/test/trip/',
+    url(r'^api/manage/trip/',
         TripViewSet.as_view({'get': 'list', 'put': 'update', 'delete': 'destroy', 'post': 'create'})),
-    url(r'^api/manage/test/station/',
+    url(r'^api/manage/station/',
         StationViewSet.as_view({'get': 'list', 'put': 'update', 'delete': 'destroy', 'post': 'create'})),
     # 用户管理
     url(r'^api/userprofile/', include(userprofile)),

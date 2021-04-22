@@ -1,4 +1,5 @@
 from django.contrib.auth.models import User
+from django.views.decorators.csrf import csrf_exempt
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
@@ -7,7 +8,7 @@ from rest_framework.response import Response
 
 from transit.models import Users, Workdays, Trips, Station
 from transit.serializers import PassengerSerializer, WorkdaySerializer, StationSerializer, TripSerializer
-from userprofile.permissions import IsSelfOrReadOnly
+from userprofile.permissions import IsSelfOrReadOnly, IsAdminUserOrReadOnly
 
 
 # 自定义分页类
@@ -37,7 +38,7 @@ class PassengerViewSet(viewsets.ModelViewSet):
         if self.request.method == 'GET':
             self.permission_classes = [AllowAny]
         else:
-            self.permission_classes = [IsAuthenticatedOrReadOnly, IsSelfOrReadOnly]
+            self.permission_classes = [IsAdminUserOrReadOnly]
 
         return super().get_permissions()
 
@@ -47,6 +48,8 @@ class PassengerViewSet(viewsets.ModelViewSet):
         :return: dict
         """
         self.params_dict = self.request.query_params.dict()
+        if 'token' in self.params_dict.keys():
+            del self.params_dict['token']
         if 'page' in self.params_dict.keys():
             self.params_dict.pop('page')
         if 'limit' in self.params_dict.keys():
@@ -62,7 +65,7 @@ class PassengerViewSet(viewsets.ModelViewSet):
         :return: dict
         """
         data = {}
-        uid = self.request.data.get('passenger_id', None)
+        uid = self.request.data.get('user_id', None)
         if uid:
             data['user_id'] = uid
         dist = self.request.data.get('dist', None)
@@ -82,14 +85,14 @@ class PassengerViewSet(viewsets.ModelViewSet):
         :return: Bool
         """
         if form['user_id'] is None:
-            return False
+            return False, 'user_id'
         if form['birth'] is None or not isinstance(form['birth'], int):
-            return False
+            return False, 'birth'
         if form['gender'] is None or not form['gender'] in [0, 1]:
-            return False
+            return False, 'gender'
         if form['dist'] is None or not isinstance(form['dist'], int):
-            return False
-        return True
+            return False, 'dist'
+        return True, ''
 
     def get_queryset(self):
         """
@@ -143,7 +146,8 @@ class PassengerViewSet(viewsets.ModelViewSet):
         """
         context = {}
         form = self.get_request_data()
-        if self.valid_users_data(form):
+        flag, msg = self.valid_users_data(form)
+        if flag:
             try:
                 new_user = Users(**form)
                 new_user.save()
@@ -154,7 +158,7 @@ class PassengerViewSet(viewsets.ModelViewSet):
                 context['message'] = '创建失败,出现错误{}'.format(e)
         else:
             context['code'] = 1000
-            context['message'] = '数据不符合规范'
+            context['message'] = '数据不符合规范,{}'.format(msg)
         return Response(context)
 
     def update(self, request, *args, **kwargs):
@@ -166,18 +170,23 @@ class PassengerViewSet(viewsets.ModelViewSet):
         :return: json
         """
         context = {}
-        queryset = self.get_queryset()
+        uid = self.request.data.get('user_id', None)
+        queryset = self.get_queryset().filter(user_id=uid)
         if queryset.exists():
             form = self.get_request_data()
-            # TODO: 数据格式验证
-            try:
-                queryset.update(**form)
-                context['code'] = 2000
-                context['message'] = '数据更新成功'
-                context['data'] = list(queryset.values())
-            except BaseException as e:
-                context['code'] = 2000
-                context['message'] = '数据更新失败,{}'.format(e)
+            flag, msg = self.valid_users_data(form)
+            if flag:
+                try:
+                    queryset.update(**form)
+                    context['code'] = 2000
+                    context['message'] = '数据更新成功'
+                    context['data'] = list(queryset.values())
+                except BaseException as e:
+                    context['code'] = 2000
+                    context['message'] = '数据更新失败,{}'.format(e)
+            else:
+                context['code'] = 1000
+                context['message'] = '数据不符合规范,{}'.format(msg)
         else:
             context['code'] = 1000
             context['message'] = '不存在指定数据'
@@ -192,7 +201,7 @@ class PassengerViewSet(viewsets.ModelViewSet):
         :return: json
         """
         context = {}
-        uid = self.request.query_params.get('passenger_id', None)
+        uid = self.request.data.get('passenger_id', None)
         try:
             passenger = Users.objects.get(user_id=uid)
             passenger.delete()
@@ -219,8 +228,7 @@ class WorkdayViewSet(viewsets.ModelViewSet):
         if self.request.method == 'GET':
             self.permission_classes = [AllowAny]
         else:
-            self.permission_classes = [IsAuthenticatedOrReadOnly, IsSelfOrReadOnly]
-
+            self.permission_classes = [IsAdminUserOrReadOnly]
         return super().get_permissions()
 
     def get_query_params(self):
@@ -228,6 +236,7 @@ class WorkdayViewSet(viewsets.ModelViewSet):
         解析请求参数
         :return: dict
         """
+        self.params_dict = {}
         date = self.request.query_params.get('date', None)
         if date:
             self.params_dict['date'] = date
@@ -245,7 +254,7 @@ class WorkdayViewSet(viewsets.ModelViewSet):
         data = {}
         date = self.request.data.get('date', None)
         if date:
-            date['date'] = date
+            data['date'] = date
         cls = self.request.data.get('date_class', None)
         if cls:
             data['date_class'] = cls
@@ -271,14 +280,14 @@ class WorkdayViewSet(viewsets.ModelViewSet):
         """
         self.get_query_params()
         if self.params_dict:
-            if self.sort:
-                queryset = self.queryset.filter(**self.params_dict).order_by(self.sort)
-            else:
-                queryset = self.queryset.filter(**self.params_dict)
+            queryset = self.queryset.filter(**self.params_dict)
         else:
-            queryset = self.queryset
+            queryset = self.queryset.filter()
+        if self.sort:
+            queryset = queryset.order_by(self.sort)
         return queryset
 
+    @csrf_exempt
     def list(self, request, *args, **kwargs):
         """
         列出所有的Workday信息
@@ -330,6 +339,7 @@ class WorkdayViewSet(viewsets.ModelViewSet):
             context['message'] = '数据不符合规范'
         return Response(context)
 
+    @csrf_exempt
     def update(self, request, *args, **kwargs):
         """
         更新Workday数据
@@ -365,7 +375,7 @@ class WorkdayViewSet(viewsets.ModelViewSet):
         :return: json
         """
         context = {}
-        date = self.request.query_params.get('date', None)
+        date = self.request.data.get('date', None)
         if date:
             try:
                 workday = Workdays.objects.get(date=date)
@@ -393,8 +403,7 @@ class TripViewSet(viewsets.ModelViewSet):
         if self.request.method == 'GET':
             self.permission_classes = [AllowAny]
         else:
-            self.permission_classes = [IsAuthenticatedOrReadOnly, IsSelfOrReadOnly]
-
+            self.permission_classes = [IsAdminUserOrReadOnly]
         return super().get_permissions()
 
     def get_query_params(self):
@@ -403,13 +412,15 @@ class TripViewSet(viewsets.ModelViewSet):
         :return: dict
         """
         self.params_dict = self.request.query_params.dict()
+        if 'token' in self.params_dict.keys():
+            del self.params_dict['token']
         if 'page' in self.params_dict.keys():
             del self.params_dict['page']
         if 'limit' in self.params_dict.keys():
             del self.params_dict['limit']
         if 'sort' in self.params_dict.keys():
             del self.params_dict['sort']
-        self.sort = self.request.query_params.get('sort', None)
+        self.sort = self.request.query_params.get('sort', 'id')
 
     def get_request_data(self):
         """
@@ -417,15 +428,13 @@ class TripViewSet(viewsets.ModelViewSet):
         :return: dict
         """
         data = {}
-
-        user_id = self.request.data.get('user_id_id')
+        user_id = self.request.data.get('user_id')
         in_station = self.request.data.get('in_station', None)
         in_station_time = self.request.data.get('in_station_time', None)
         out_station = self.request.data.get('out_station', None)
         out_station_time = self.request.data.get('out_station_time', None)
         price = self.request.data.get('price', None)
         channel = self.request.data.get('channel', None)
-
         if user_id:
             data['user_id'] = user_id
         if in_station:
@@ -448,20 +457,20 @@ class TripViewSet(viewsets.ModelViewSet):
         :return: Bool
         """
         if form['user_id'] is None:
-            return False
+            return False, form['user_id']
         if form['in_station'] is None or not Station.objects.get(station_name=form['in_station']):
-            return False
+            return False, form['in_station']
         if form['in_station_time'] is None:
-            return False
+            return False, form['in_station_time']
         if form['out_station'] is None or Station.objects.get(station_name=form['out_station']):
-            return False
+            return False, form['out_station']
         if form['out_station_time'] is None:
-            return False
+            return False, form['out_station_time']
         if form['channel'] is None or not isinstance(form['channel'], int):
-            return False
+            return False, form['channel']
         if form['price'] is None or not isinstance(form['price'], int):
-            return False
-        return True
+            return False, form['price']
+        return True, ''
 
     def get_queryset(self):
         """
@@ -470,12 +479,11 @@ class TripViewSet(viewsets.ModelViewSet):
         """
         self.get_query_params()
         if self.params_dict:
-            if self.sort:
-                queryset = self.queryset.filter(**self.params_dict).order_by(self.sort)
-            else:
-                queryset = self.queryset.filter(**self.params_dict)
+            queryset = self.queryset.filter(**self.params_dict)
         else:
-            queryset = self.queryset
+            queryset = self.queryset.filter()
+        if self.sort:
+            queryset = queryset.order_by(self.sort)
         return queryset
 
     def list(self, request, *args, **kwargs):
@@ -515,7 +523,8 @@ class TripViewSet(viewsets.ModelViewSet):
         """
         context = {}
         form = self.get_request_data()
-        if self.valid_trip_data(form):
+        flag, msg = self.valid_trip_data(form)
+        if flag:
             try:
                 new_trip = Trips(**form)
                 new_trip.save()
@@ -526,7 +535,7 @@ class TripViewSet(viewsets.ModelViewSet):
                 context['message'] = '创建数据失败, 出现错误{}'.format(e)
         else:
             context['code'] = 1000
-            context['message'] = '数据不符合规范'
+            context['message'] = '数据不符合规范,{}'.format(msg)
         return Response(context)
 
     def update(self, request, *args, **kwargs):
@@ -538,7 +547,8 @@ class TripViewSet(viewsets.ModelViewSet):
         :return: json
         """
         context = {}
-        queryset = self.get_queryset()
+        tid = self.request.data.get('id', None)
+        queryset = self.get_queryset().filter(id=tid)
         if queryset.exists():
             form = self.get_request_data()
             # TODO: 数据格式验证
@@ -564,16 +574,19 @@ class TripViewSet(viewsets.ModelViewSet):
         :return: json
         """
         context = {}
-        tid = self.request.query_params.get('id', None)
+        tid = self.request.data.get('id', None)
         if tid:
             try:
                 trip = Trips.objects.get(id=tid)
                 trip.delete()
                 context['code'] = 2000
-                context['message'] = '删除失败'
+                context['message'] = '删除成功'
             except BaseException as e:
                 context['code'] = 1000
                 context['message'] = '删除失败，{}'.format(e)
+        else:
+            context['code'] = 1000
+            context['message'] = '删除失败'
         return Response(context)
 
 
@@ -589,10 +602,10 @@ class StationViewSet(viewsets.ModelViewSet):
         验证权限
         :return:
         """
-        if self.request.method == 'GET' or 'PUT':
+        if self.request.method == 'GET':
             self.permission_classes = [AllowAny]
-        # else:
-        #     self.permission_classes = [IsAuthenticatedOrReadOnly, IsSelfOrReadOnly]
+        else:
+            self.permission_classes = [IsAdminUserOrReadOnly]
 
         return super().get_permissions()
 
@@ -602,6 +615,8 @@ class StationViewSet(viewsets.ModelViewSet):
         :return: dict
         """
         self.params_dict = self.request.query_params.dict()
+        if 'token' in self.params_dict.keys():
+            del self.params_dict['token']
         if 'page' in self.params_dict.keys():
             del self.params_dict['page']
         if 'limit' in self.params_dict.keys():
@@ -723,18 +738,23 @@ class StationViewSet(viewsets.ModelViewSet):
         :return: json
         """
         context = {}
-        queryset = self.get_queryset()
-        if queryset.exists():
-            form = self.get_request_data()
-            # TODO: 数据格式验证
-            try:
-                queryset.update(**form)
-                context['code'] = 2000
-                context['message'] = '数据更新成功'
-                context['data'] = list(queryset.values())
-            except BaseException as e:
-                context['code'] = 2000
-                context['message'] = '数据更新失败,{}'.format(e)
+        sid = self.request.data.get('station_id', None)
+        if sid:
+            queryset = self.get_queryset().filter(station_id=sid)
+            if queryset.exists():
+                form = self.get_request_data()
+                # TODO: 数据格式验证
+                try:
+                    queryset.update(**form)
+                    context['code'] = 2000
+                    context['message'] = '数据更新成功'
+                    context['data'] = list(queryset.values())
+                except BaseException as e:
+                    context['code'] = 2000
+                    context['message'] = '数据更新失败,{}'.format(e)
+            else:
+                context['code'] = 1000
+                context['message'] = '不存在指定数据'
         else:
             context['code'] = 1000
             context['message'] = '不存在指定数据'
@@ -749,14 +769,17 @@ class StationViewSet(viewsets.ModelViewSet):
         :return: json
         """
         context = {}
-        sid = self.request.query_params.get('station_id', None)
+        sid = self.request.data.get('station_id', None)
         if sid:
             try:
-                station = Trips.objects.get(station_id=sid)
+                station = Station.objects.get(station_id=sid)
                 station.delete()
                 context['code'] = 2000
-                context['message'] = '删除失败'
+                context['message'] = '删除成功'
             except BaseException as e:
                 context['code'] = 1000
                 context['message'] = '删除失败，{}'.format(e)
+        else:
+            context['code'] = 1000
+            context['message'] = '删除失败'
         return Response(context)

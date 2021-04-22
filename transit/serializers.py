@@ -13,7 +13,7 @@ class PassengerSerializer(serializers.HyperlinkedModelSerializer):
         fields = ['user_id', 'dist', 'birth', 'gender']
 
 
-class StationSerializer(serializers.HyperlinkedModelSerializer):
+class StationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Station
         fields = '__all__'

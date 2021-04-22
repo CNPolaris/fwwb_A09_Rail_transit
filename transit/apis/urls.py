@@ -65,10 +65,10 @@ api_urls = [
     # excel导出
     url(r'manage/export', exports.dispatcher),
     # model基础数据管理
-    url(r'manage/trip/', include(trip_urls)),
-    url(r'manage/station/', include(station_urls)),
-    url(r'manage/workday/', include(workday_urls)),
-    url(r'manage/passenger/', include(passenger_url)),
+    # url(r'manage/trip/', include(trip_urls)),
+    # url(r'manage/station/', include(station_urls)),
+    # url(r'manage/workday/', include(workday_urls)),
+    # url(r'manage/passenger/', include(passenger_url)),
     # 基础数据统计url
     url(r'basic/', include(basic_statistics_urls))
 ]
