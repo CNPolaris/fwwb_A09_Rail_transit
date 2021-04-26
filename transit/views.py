@@ -51,11 +51,11 @@ class PassengerViewSet(viewsets.ModelViewSet):
         if 'token' in self.params_dict.keys():
             del self.params_dict['token']
         if 'page' in self.params_dict.keys():
-            self.params_dict.pop('page')
+            del self.params_dict['page']
         if 'limit' in self.params_dict.keys():
-            self.params_dict.pop('limit')
+            del self.params_dict['limit']
         if 'sort' in self.params_dict.keys():
-            self.params_dict.pop('sort')
+            del self.params_dict['sort']
 
         self.sort = self.request.query_params.get('sort', None)
 
