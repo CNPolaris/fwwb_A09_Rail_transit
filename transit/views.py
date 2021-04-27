@@ -244,7 +244,7 @@ class WorkdayViewSet(viewsets.ModelViewSet):
         if cls:
             self.params_dict['date_class'] = cls
 
-        self.sort = self.request.query_params.get('sort', 'date')
+        self.sort = self.request.query_params.get('sort', None)
 
     def get_request_data(self):
         """
