@@ -101,6 +101,8 @@ def get_user_info(request):
 
         else:
             return JsonResponse({'code': 1000, 'message': '无访问权限'})
+    else:
+        return JsonResponse({'code': 1000, 'message': '不支持该请求方式'})
 
 
 def get_role(request):
