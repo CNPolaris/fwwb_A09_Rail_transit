@@ -277,6 +277,7 @@ def get_station_now(request):
             inNum = [i for i in in_station_dict.values()]
             outNum = [i for i in out_station_dict.values()]
             context['code'] = 2000
+            context['message'] = '获取数据成功'
             context['label'] = station_list
             context['in_list'] = inNum
             context['out_list'] = outNum
@@ -287,7 +288,7 @@ def get_station_now(request):
             return JsonResponse(context)
     else:
         context['code'] = 1000
-        context['message'] = '无法获取数据'
+        context['message'] = '用户未登录或无权限获取数据'
         return JsonResponse(context)
 
 
@@ -471,6 +472,7 @@ def get_OD_station(request):
             od = list(Trips_querySet)
             od_dict = pd.value_counts(od)
             context['code'] = 2000
+            context['message'] = '获取数据成功'
             station_list = []
             context['links'] = [
                 {
