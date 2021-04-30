@@ -1,0 +1,11 @@
+version: '2'
+
+services:
+  idcops:
+    build: .
+    image: transit
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/code
+    ports:
+      - "8000:8000"
