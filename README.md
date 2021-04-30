@@ -1,76 +1,248 @@
-# fwwb_A09_Rail_transit
+## fwwb_A09_Rail_transit💯
 
-#### 一、介绍
-**【问题说明】**     
-以地铁 ACC(地铁自动售检票系统清分中心简称)系统的用户行程数据、站点 数据为基础，完成基于地铁出行行程大数据的分析建模和算法研究，实现对地铁 的线路级别以及站点级别的客流进行分析和预测。  
-**【用户期望】**     
-提供友好的用户交互方式，通过输入或者调整模型的各种相关因子，对指定 时间、指定线路或者站点的客流进行预测和预警并且通过图形化的方式直观展 现。
+> 基于Django，JWT，Vue & Element 的前后端分离的轨道交通客流预测系统
 
-#### 二、任务清单
+### 项目介绍
 
-1. - [x] 确定技术路线   
-   - - [x] 后端技术路线
-   - - [x] 前端技术路线
-2. - [x] 建立数据库
-   - - [x] 优化数据库结构
-   - - [ ] 数据分表
-3. 基于给定的数据进行客流精确统计
-    - [x] 单月整体的客流波动分析
-    - [x] 工作日和周末的客流分析
-    - [x] 单站的点出/入站客流分析
-    - [x] 用户年龄结构分析
-    - [x] 早晚高峰客流站点分布分析
-    - [ ] 站点OD客流量分析
-    - [ ] 线路断面（按站点）流量分析
-    - [ ] 团队其他自愿拓展的统计分析
-4. 建立准确的预测模型
-#### 三、使用到的技术
-1. 整体架构
-B/S结构
-2. 后端技术
-Django
-3. 前端技术
-Bootstrap、Jquery、Echarts
+- 前端采用Vue\Element UI
+- 后端采用Django\JWT
+- 权限认证使用JWT
+- 特别鸣谢 [element](https://github.com/ElemeFE/element)\\[vue-element-admin](https://github.com/PanJiaChen/vue-element-admin)
 
-#### 四、字典对照
+### 内置功能
 
-1. 数据字典
+### 在线体验😺
 
-   1. users 用户信息
+- admin/123456
 
-      | 字段    | 说明           | 数据类型 | 字段   | 说明           | 数据类型 |
-      | ------- | -------------- | -------- | ------ | -------------- | -------- |
-      | user_id | 用户的唯一编号 | varchar  | dist   | 用户所在的省市 | int      |
-      | birth   | 用户的出生年份 | int      | gender | 用户的性别     | int      |
+演示地址: [演示地址](http://47.117.118.196:8080/)
 
-   2. station 站点信息
+文档地址:[文档地址](https://space-9358y2.w.eolinker.com/#/share/index?shareCode=18VfD2)
 
-      | 字段          | 说明       | 数据类型 | 字段         | 说明               | 数据类型 |
-      | ------------- | ---------- | -------- | ------------ | ------------------ | -------- |
-      | station_id    | 站点的编号 | int      | station_name | 站点的名称         | varchar  |
-      | station_route | 线路       | varchar  | admin_area   | 站点所在的行政区域 | varchar  |
+### 部署教程😽
 
-   3. trips 行程信息
+> 基于CentOS7
 
-      | 字段            | 说明     | 类型     | 字段             | 说明     | 类型     | 字段    | 说明     | 类型   |
-      | --------------- | -------- | -------- | ---------------- | -------- | -------- | ------- | -------- | :----- |
-      | in_station      | 入站名   | varchar  | out_station      | 出站名   | varchar  | channel | 购票渠道 | int    |
-      | in_station_time | 入站时间 | datetime | out_station_time | 出站时间 | datetime | price   | 票价     | double |
-      | user_id_id      | 用户id   | varchar  |                  |          |          |         |          |        |
+#### 后端部分
 
-   4. tripstatistics 实时客流统计
+首先为后端准备虚拟环境
 
-      | 字段  | 说明               | 数据类型 |
-      | ----- | ------------------ | -------- |
-      | date  | 日期               | date     |
-      | count | 每日客流量实时统计 | int      |
+```shell
+~$ sudo yum install python3
+~$ sudo yum install python3-pip
+~$ sudo pip3 install virtualenv
+```
 
-   5. workdays 工作日
+接下来修改后端的配置文件`settings.py`
 
-      | 字段       | 说明             | 数据类型 |
-      | ---------- | ---------------- | -------- |
-      | date       | 日期             | date     |
-      | date_class | 日期所属于的分类 | int      |
+```python
+# fwwb_A09_Rail_transit/settings.py
 
-      
+# 关闭调试模式
+DEBUG = False
+# 配置数据库
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': '', # 你的数据库名
+        'USER': '', # 用户名
+        'PASSWORD': '', # 密码
+        'HOST': '', # host
+        'PORT': '3306', # 端口
+    }
+}
+# 允许的服务器
+ALLOWED_HOSTS = ['*']
+```
 
+在项目根目录下创建虚拟环境\安装库\数据迁移
+
+1. 创建并进入虚拟环境
+
+   ```shell
+   $ virtualenv --python=python3.6 venv
+   $ source venv/bin/activate
+   (venv)$ 
+   ```
+
+2. 安装库
+
+   ```shell
+   (venv) $ pip3 install -r requirements.txt
+   ```
+
+   **注意**: 可能存在部分包的版本不对,原因是开发时是在win下进行的,Linux下相同的包的版本可能存在不一致,只需删除`requirements.txt`中存在问题的包的版本后缀即可
+
+3. 数据迁移
+
+   ```shell
+   (venv) $ python manage.py makemigrations
+   (venv) $ python manage.py migrate
+   ```
+
+4. 以上基础工作完成后就可以启动后端服务了
+
+    ```shell
+    (venv) $ pip3 install gunicorn
+    (venv)gunicorn fwwb_A09_Rail_transit.wsgi:application --bind 0.0.0.0:8090
+    ```
+
+     通过gunicorn将服务绑定在0.0.0.0:8090端口
+
+#### 前端部分
+
+[前端项目](https://gitee.com/cnpolaris-tian/vue-element-admin.git)
+
+通过执行以下代码对前端项目进行打包得到静态文件
+
+```sh
+# 打包正式环境
+npm run build:prod
+
+# 打包预发布环境
+npm run build:stage
+```
+
+构建打包成功之后，会在根目录生成 `dist` 文件夹，里面就是构建打包好的文件，通常是 `***.js` 、`***.css`、`index.html` 等静态文件。
+
+如果需要自定义构建，比如指定 `dist` 目录等，则需要通过 [config](https://github.com/PanJiaChen/vue-element-admin/blob/master/vue.config.js)的 `outputDir` 进行配置
+
+将打包得到的`dist`文件夹压缩传到服务器上的后端项目的根目录下
+
+接下来通过`Nginx`驱动前端
+
+安装`nginx`
+
+```sh
+~$ sudo yum install nginx
+~$ cd etc/nginx/
+~$ sudo vi nginx.conf
+```
+
+```
+user root;
+worker_processes auto;
+error_log /var/log/nginx/error.log;
+pid /run/nginx.pid;
+
+# Load dynamic modules. See /usr/share/doc/nginx/README.dynamic.
+include /usr/share/nginx/modules/*.conf;
+
+events {
+    worker_connections 1024;
+}
+
+http {
+    log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+                      '$status $body_bytes_sent "$http_referer" '
+                      '"$http_user_agent" "$http_x_forwarded_for"';
+
+    access_log  /var/log/nginx/access.log  main;
+
+    sendfile            on;
+    tcp_nopush          on;
+    tcp_nodelay         on;
+    keepalive_timeout   65;
+    types_hash_max_size 2048;
+
+    include             /etc/nginx/mime.types;
+    default_type        application/octet-stream;
+    include /etc/nginx/conf.d/*.conf;
+
+    server {
+        listen       80;
+        server_name  47.117.118.196;
+
+        # Load configuration files for the default server block.
+        include /etc/nginx/default.d/*.conf;
+
+        location / {
+ 		root         /root/cnpolaris/myprojects/fwwb_A09_Rail_transit/dist;
+		index index.html index.htm;
+        }
+
+        error_page 404 /404.html;
+        location = /404.html {
+        }
+
+        error_page 500 502 503 504 /50x.html;
+        location = /50x.html {
+        }
+   }
+}
+```
+
+此配置会监听 80 端口（通常 http 请求的端口），监听的 IP 地址写你自己的**服务器公网 IP**
+
+```sh
+# 启动Nginx
+service nginx start
+# 每次修改配置文件后
+service nginx restart
+```
+
+此时已经可以通过ip看到前端内容了,但是前后端还尚未关联,接下来继续修改nginx.conf
+
+#### 关联前后端
+
+在nginx.conf的server中添加
+
+```
+location /api {
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_set_header Host $http_host;
+    proxy_pass http://0.0.0.0:8090;
+}
+```
+
+当请求前端请求api时,会自动转发给后端进行处理
+
+### 进行托管
+
+为了避免当 SSH 终端一关闭，Web 服务也一起被关闭了，导致网站无法连接,需要进行进程托管.
+
+参考@frostming 的文章[<Web服务的进程托管>](https://frostming.com/2020/05-24/process-management/)
+
+1. 在项目根目录下建立run.sh文件
+
+```sh
+$ vi run.sh
+```
+
+```sh
+#!/bin/bash
+source /root/cnpolaris/myprojects/fwwb_A09_Rail_transit/venv/bin/activate 
+cd /root/cnpolaris/myprojects/fwwb_A09_Rail_transit
+gunicorn fwwb_A09_Rail_transit.wsgi:application --bind 0.0.0.0:8090
+```
+
+2. 在/etc/systemd/system/ 目录下创建一个transit.service 进程文件
+
+   ```sh
+   [Unit]
+   Description=fwwb transit service
+   
+   [Service]
+   Type=forking
+   ExecStart=/bin/bash /root/cnpolaris/myprojects/fwwb_A09_Rail_transit/run.sh
+   KillMode=process
+   Restart=on-failure
+   RestartSec=3s
+   [Install]
+   WantedBy=multi-user.target
+   ```
+
+   ```
+   systemctl enable transit
+   ```
+
+### 演示图
+
+![](https://gitee.com/cnpolaris-tian/giteePagesImages/raw/master/null/20210430170529.png)
+
+![](https://gitee.com/cnpolaris-tian/giteePagesImages/raw/master/null/20210430170618.png)
+
+![](https://gitee.com/cnpolaris-tian/giteePagesImages/raw/master/null/image-20210430170641760.png)
+
+![](https://gitee.com/cnpolaris-tian/giteePagesImages/raw/master/null/20210430170836.png)
