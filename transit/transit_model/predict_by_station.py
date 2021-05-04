@@ -14,8 +14,7 @@ from django.http import JsonResponse
 import lightgbm as lgb
 import os
 from fwwb_A09_Rail_transit.settings import BASE_DIR
-
-MODEL_PATH = os.path.join(BASE_DIR, 'static\model\\')
+MODEL_PATH = os.path.join(BASE_DIR, 'static', 'model')
 STANDARD_TIME = ['0:10', '0:20', '0:30', '0:40', '0:50', '0:60', '1:10', '1:20', '1:30', '1:40', '1:50', '1:60', '2:10',
                  '2:20', '2:30', '2:40', '2:50', '2:60', '3:10', '3:20', '3:30', '3:40', '3:50', '3:60', '4:10', '4:20',
                  '4:30', '4:40', '4:50', '4:60', '5:10', '5:20', '5:30', '5:40', '5:50', '5:60', '6:10', '6:20', '6:30',
@@ -47,7 +46,7 @@ def load_model(station, label):
     :return: lightgbm model
     """
     model_path = f'model_{station}_{label}.txt'
-    gbm = lgb.Booster(model_file=MODEL_PATH + model_path)
+    gbm = lgb.Booster(model_file=os.path.join(MODEL_PATH, model_path))
     return gbm
 
 
